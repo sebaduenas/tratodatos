@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -84,28 +83,9 @@ export default function RegisterPage() {
         return;
       }
 
-      // Auto-login después del registro
-      try {
-        const signInResult = await signIn("credentials", {
-          email: data.email,
-          password: data.password,
-          redirect: false,
-        });
-
-        if (signInResult?.error) {
-          toast.success("¡Cuenta creada! Por favor inicia sesión.");
-          router.push("/login");
-          return;
-        }
-
-        toast.success("¡Cuenta creada exitosamente!");
-        router.push("/dashboard");
-        router.refresh();
-      } catch (signInError) {
-        // Si el auto-login falla, igual redirigimos al login
-        toast.success("¡Cuenta creada! Por favor inicia sesión.");
-        router.push("/login");
-      }
+      // Redirigir al login después del registro exitoso
+      toast.success("¡Cuenta creada! Por favor inicia sesión.");
+      router.push("/login");
     } catch (error) {
       toast.error("Error al crear la cuenta");
     } finally {
