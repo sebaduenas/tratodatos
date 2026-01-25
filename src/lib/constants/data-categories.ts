@@ -127,6 +127,13 @@ export const DATA_CATEGORIES = {
     examples: ['Historial de navegación', 'Preferencias de compra', 'Patrones de uso'],
     isSensitive: false,
   },
+  other: {
+    id: 'other',
+    name: 'Otros datos personales',
+    description: 'Otros tipos de datos personales no listados anteriormente',
+    examples: ['Datos específicos del negocio', 'Información adicional'],
+    isSensitive: false,
+  },
 } as const;
 
 export const SENSITIVE_CATEGORIES = [
