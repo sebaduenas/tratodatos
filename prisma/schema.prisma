@@ -171,6 +171,10 @@ model Policy {
   logoUrl         String?
   primaryColor    String?
   
+  // Compartir
+  shareToken      String?      @unique
+  isPublic        Boolean      @default(false)
+  
   // Tracking
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt

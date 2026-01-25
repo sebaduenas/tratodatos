@@ -12,6 +12,7 @@ import {
   ChevronDown,
   User,
   CreditCard,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +25,8 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 interface DashboardNavProps {
   user: {
@@ -38,6 +41,7 @@ interface DashboardNavProps {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/politicas", label: "Mis Políticas", icon: FileText },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 export function DashboardNav({ user }: DashboardNavProps) {
@@ -127,7 +131,9 @@ export function DashboardNav({ user }: DashboardNavProps) {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4" data-onboarding="user-menu">
+          <ThemeToggle />
+          <NotificationBell />
           {getPlanBadge(user.subscriptionTier)}
 
           <DropdownMenu>

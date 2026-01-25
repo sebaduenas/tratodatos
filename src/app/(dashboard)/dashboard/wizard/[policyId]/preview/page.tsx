@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { ArrowLeft, Download, FileText, Edit, CheckCircle } from "lucide-react";
+import { ArrowLeft, Download, FileText, Edit, CheckCircle, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -110,10 +110,16 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
                       </Button>
                     </a>
 
-                    <Button variant="outline" className="w-full gap-2" disabled>
-                      <FileText className="w-4 h-4" />
-                      Ver HTML (próximamente)
-                    </Button>
+                    <a
+                      href={`/api/policies/${policyId}/generate/html`}
+                      download
+                      className="block"
+                    >
+                      <Button variant="outline" className="w-full gap-2">
+                        <Code className="w-4 h-4" />
+                        Descargar HTML
+                      </Button>
+                    </a>
                   </>
                 ) : (
                   <>

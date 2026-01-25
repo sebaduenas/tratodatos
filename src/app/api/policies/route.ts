@@ -4,9 +4,27 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { PLAN_LIMITS } from "@/lib/constants";
+import { Prisma } from "@prisma/client";
 
 const createPolicySchema = z.object({
   name: z.string().min(1, "El nombre es requerido").max(200),
+  templateId: z.string().optional(),
+  templateData: z
+    .object({
+      step01Data: z.record(z.unknown()).optional(),
+      step02Data: z.record(z.unknown()).optional(),
+      step03Data: z.record(z.unknown()).optional(),
+      step04Data: z.record(z.unknown()).optional(),
+      step05Data: z.record(z.unknown()).optional(),
+      step06Data: z.record(z.unknown()).optional(),
+      step07Data: z.record(z.unknown()).optional(),
+      step08Data: z.record(z.unknown()).optional(),
+      step09Data: z.record(z.unknown()).optional(),
+      step10Data: z.record(z.unknown()).optional(),
+      step11Data: z.record(z.unknown()).optional(),
+      step12Data: z.record(z.unknown()).optional(),
+    })
+    .optional(),
 });
 
 // GET /api/policies - List user's policies
@@ -76,17 +94,60 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name } = createPolicySchema.parse(body);
+    const { name, templateId, templateData } = createPolicySchema.parse(body);
+
+    // Prepare policy data with optional template
+    const policyData: Prisma.PolicyCreateInput = {
+      user: { connect: { id: session.user.id } },
+      name,
+      status: "DRAFT",
+      currentStep: 1,
+      completedSteps: [],
+      completionPct: 0,
+    };
+
+    // Apply template data if provided
+    if (templateData) {
+      if (templateData.step01Data) {
+        policyData.step01Data = templateData.step01Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step02Data) {
+        policyData.step02Data = templateData.step02Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step03Data) {
+        policyData.step03Data = templateData.step03Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step04Data) {
+        policyData.step04Data = templateData.step04Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step05Data) {
+        policyData.step05Data = templateData.step05Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step06Data) {
+        policyData.step06Data = templateData.step06Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step07Data) {
+        policyData.step07Data = templateData.step07Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step08Data) {
+        policyData.step08Data = templateData.step08Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step09Data) {
+        policyData.step09Data = templateData.step09Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step10Data) {
+        policyData.step10Data = templateData.step10Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step11Data) {
+        policyData.step11Data = templateData.step11Data as Prisma.InputJsonValue;
+      }
+      if (templateData.step12Data) {
+        policyData.step12Data = templateData.step12Data as Prisma.InputJsonValue;
+      }
+    }
 
     const policy = await prisma.policy.create({
-      data: {
-        userId: session.user.id,
-        name,
-        status: "DRAFT",
-        currentStep: 1,
-        completedSteps: [],
-        completionPct: 0,
-      },
+      data: policyData,
     });
 
     // Audit log
@@ -96,11 +157,11 @@ export async function POST(request: NextRequest) {
         action: "POLICY_CREATED",
         resource: "policy",
         resourceId: policy.id,
-        details: { name },
+        details: { name, templateId: templateId || null },
       },
     });
 
-    return NextResponse.json({ policy }, { status: 201 });
+    return NextResponse.json(policy, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
