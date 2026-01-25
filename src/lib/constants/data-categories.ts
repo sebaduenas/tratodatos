@@ -1,0 +1,137 @@
+// lib/constants/data-categories.ts
+// TratoDatos - Constantes Legales Chilenas (Ley 21.719)
+
+export const DATA_CATEGORIES = {
+  identification: {
+    id: 'identification',
+    name: 'Datos de identificación',
+    description: 'Información que permite identificar a una persona',
+    examples: ['Nombre completo', 'RUT / Cédula de identidad', 'Número de pasaporte', 'Fotografía', 'Firma'],
+    isSensitive: false,
+    articleReference: 'Art. 2 letra f)',
+  },
+  contact: {
+    id: 'contact',
+    name: 'Datos de contacto',
+    description: 'Información para comunicarse con la persona',
+    examples: ['Dirección postal', 'Correo electrónico', 'Número de teléfono', 'Redes sociales'],
+    isSensitive: false,
+  },
+  financial: {
+    id: 'financial',
+    name: 'Datos financieros',
+    description: 'Información sobre situación económica y transacciones',
+    examples: ['Número de cuenta bancaria', 'Tarjeta de crédito', 'Historial de transacciones', 'Información tributaria'],
+    isSensitive: false,
+  },
+  employment: {
+    id: 'employment',
+    name: 'Datos laborales',
+    description: 'Información relacionada con empleo',
+    examples: ['Cargo', 'Historial laboral', 'Remuneraciones', 'Evaluaciones de desempeño'],
+    isSensitive: false,
+  },
+  health: {
+    id: 'health',
+    name: 'Datos de salud',
+    description: 'Información sobre estado de salud física o mental',
+    examples: ['Historial médico', 'Diagnósticos', 'Tratamientos', 'Licencias médicas'],
+    isSensitive: true,
+    articleReference: 'Art. 16 ter',
+    warning: 'DATO SENSIBLE - Requiere consentimiento explícito o base legal específica',
+  },
+  biometric: {
+    id: 'biometric',
+    name: 'Datos biométricos',
+    description: 'Características físicas que permiten identificación única',
+    examples: ['Huellas dactilares', 'Reconocimiento facial', 'Patrón de iris'],
+    isSensitive: true,
+    articleReference: 'Art. 16 ter',
+    warning: 'DATO SENSIBLE',
+  },
+  genetic: {
+    id: 'genetic',
+    name: 'Datos genéticos',
+    description: 'Información sobre características genéticas',
+    examples: ['Secuencia de ADN', 'Análisis genéticos', 'Predisposiciones genéticas'],
+    isSensitive: true,
+    articleReference: 'Art. 16 ter',
+    warning: 'DATO SENSIBLE',
+  },
+  ethnic: {
+    id: 'ethnic',
+    name: 'Origen étnico o racial',
+    description: 'Información sobre origen étnico, racial o nacional',
+    examples: ['Etnia', 'Origen racial', 'Pertenencia a pueblo indígena'],
+    isSensitive: true,
+    articleReference: 'Art. 16 ter',
+    warning: 'DATO SENSIBLE',
+  },
+  political: {
+    id: 'political',
+    name: 'Opiniones políticas',
+    description: 'Información sobre ideología y afiliación política',
+    examples: ['Afiliación a partidos políticos', 'Opiniones políticas'],
+    isSensitive: true,
+    articleReference: 'Art. 16 ter',
+    warning: 'DATO SENSIBLE',
+  },
+  religious: {
+    id: 'religious',
+    name: 'Creencias religiosas o filosóficas',
+    description: 'Información sobre religión o convicciones',
+    examples: ['Religión', 'Creencias espirituales', 'Convicciones filosóficas'],
+    isSensitive: true,
+    articleReference: 'Art. 16 ter',
+    warning: 'DATO SENSIBLE',
+  },
+  sexualOrientation: {
+    id: 'sexualOrientation',
+    name: 'Orientación sexual e identidad de género',
+    description: 'Información sobre orientación sexual e identidad de género',
+    examples: ['Orientación sexual', 'Identidad de género'],
+    isSensitive: true,
+    articleReference: 'Art. 16 ter',
+    warning: 'DATO SENSIBLE',
+  },
+  criminal: {
+    id: 'criminal',
+    name: 'Datos penales',
+    description: 'Información sobre condenas e infracciones',
+    examples: ['Antecedentes penales', 'Condenas', 'Procesos judiciales'],
+    isSensitive: true,
+    articleReference: 'Art. 16 ter',
+    warning: 'DATO SENSIBLE',
+  },
+  minors: {
+    id: 'minors',
+    name: 'Datos de menores de edad',
+    description: 'Datos de personas menores de 18 años',
+    examples: ['Datos de identificación de menores', 'Información escolar'],
+    isSensitive: false,
+    requiresSpecialProtection: true,
+    articleReference: 'Art. 16 bis',
+    warning: 'Menores de 14 años requieren consentimiento de padres/tutores',
+  },
+  geolocation: {
+    id: 'geolocation',
+    name: 'Datos de geolocalización',
+    description: 'Información sobre ubicación geográfica',
+    examples: ['Coordenadas GPS', 'Historial de ubicaciones'],
+    isSensitive: false,
+  },
+  behavioral: {
+    id: 'behavioral',
+    name: 'Datos de comportamiento',
+    description: 'Información sobre hábitos y preferencias',
+    examples: ['Historial de navegación', 'Preferencias de compra', 'Patrones de uso'],
+    isSensitive: false,
+  },
+} as const;
+
+export const SENSITIVE_CATEGORIES = [
+  'health', 'biometric', 'genetic', 'ethnic', 'political', 
+  'religious', 'sexualOrientation', 'criminal'
+] as const;
+
+export type DataCategoryKey = keyof typeof DATA_CATEGORIES;

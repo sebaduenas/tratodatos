@@ -1,0 +1,297 @@
+// prisma/schema.prisma
+// TratoDatos - Schema de Base de Datos
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// =====================================================
+// USUARIOS Y AUTENTICACIÓN
+// =====================================================
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  emailVerified     DateTime?
+  passwordHash      String?
+  name              String?
+  phone             String?
+  avatar            String?
+  
+  // Datos de empresa (para poder obtener info de usuarios)
+  companyName       String?
+  companyRut        String?
+  companyAddress    String?
+  companyCity       String?
+  companyRegion     String?
+  companyPhone      String?
+  companyEmail      String?
+  companyWebsite    String?
+  industry          String?
+  employeeCount     String?
+  
+  // Suscripción
+  subscriptionTier  SubscriptionTier @default(FREE)
+  subscriptionId    String?
+  subscriptionStart DateTime?
+  subscriptionEnd   DateTime?
+  
+  // Admin
+  role              UserRole @default(USER)
+  
+  // Tracking (para analytics)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  lastLoginAt       DateTime?
+  loginCount        Int      @default(0)
+  
+  // Consentimientos
+  acceptedTermsAt   DateTime?
+  acceptedPrivacyAt DateTime?
+  marketingConsent  Boolean  @default(false)
+  
+  // UTM tracking (para saber de dónde vienen)
+  utmSource         String?
+  utmMedium         String?
+  utmCampaign       String?
+  referrer          String?
+  
+  // Relaciones
+  policies          Policy[]
+  accounts          Account[]
+  sessions          Session[]
+  auditLogs         AuditLog[]
+  
+  @@index([email])
+  @@index([createdAt])
+  @@index([subscriptionTier])
+  @@index([role])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+enum SubscriptionTier {
+  FREE
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+// =====================================================
+// POLÍTICAS DE DATOS
+// =====================================================
+
+model Policy {
+  id              String       @id @default(cuid())
+  userId          String
+  
+  // Identificación
+  name            String       // Nombre interno
+  status          PolicyStatus @default(DRAFT)
+  version         Int          @default(1)
+  
+  // Contenido del wizard (JSONB - almacena todo)
+  step01Data      Json?        // Identificación del responsable
+  step02Data      Json?        // Categorías de datos
+  step03Data      Json?        // Universo de titulares
+  step04Data      Json?        // Finalidades
+  step05Data      Json?        // Bases de licitud
+  step06Data      Json?        // Destinatarios
+  step07Data      Json?        // Transferencias internacionales
+  step08Data      Json?        // Plazos de conservación
+  step09Data      Json?        // Fuentes de datos
+  step10Data      Json?        // Decisiones automatizadas
+  step11Data      Json?        // Medidas de seguridad
+  step12Data      Json?        // Configuración final
+  
+  // Progreso
+  currentStep     Int          @default(1)
+  completedSteps  Int[]        @default([])
+  completionPct   Int          @default(0)
+  
+  // Metadatos del documento
+  generatedAt     DateTime?
+  publishedAt     DateTime?
+  effectiveDate   DateTime?
+  lastReviewDate  DateTime?
+  nextReviewDate  DateTime?
+  
+  // Personalización
+  includeLogo     Boolean      @default(false)
+  logoUrl         String?
+  primaryColor    String?
+  
+  // Tracking
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  // Relaciones
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions        PolicyVersion[]
+  downloads       PolicyDownload[]
+  
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("policies")
+}
+
+model PolicyVersion {
+  id          String   @id @default(cuid())
+  policyId    String
+  version     Int
+  content     Json     // Snapshot completo
+  changeNotes String?
+  changedBy   String?
+  createdAt   DateTime @default(now())
+  
+  policy      Policy   @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  
+  @@index([policyId])
+  @@map("policy_versions")
+}
+
+model PolicyDownload {
+  id        String   @id @default(cuid())
+  policyId  String
+  format    String   // pdf, docx, html
+  createdAt DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+  
+  policy    Policy   @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  
+  @@index([policyId])
+  @@index([createdAt])
+  @@map("policy_downloads")
+}
+
+enum PolicyStatus {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  PUBLISHED
+  ARCHIVED
+}
+
+// =====================================================
+// AUDITORÍA Y ANALYTICS
+// =====================================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String   // POLICY_CREATED, POLICY_DOWNLOADED, USER_LOGIN, etc.
+  resource    String   // policy, user, etc.
+  resourceId  String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model WizardAnalytics {
+  id              String   @id @default(cuid())
+  sessionId       String
+  policyId        String?
+  step            Int
+  action          String   // started, completed, abandoned, error
+  timeSpentSec    Int?
+  errorMessage    String?
+  createdAt       DateTime @default(now())
+  
+  @@index([sessionId])
+  @@index([step])
+  @@index([action])
+  @@index([createdAt])
+  @@map("wizard_analytics")
+}
+
+// =====================================================
+// PAGOS
+// =====================================================
+
+model Payment {
+  id               String        @id @default(cuid())
+  userId           String
+  provider         String        // mercadopago, flow
+  externalId       String        @unique
+  amount           Int           // En CLP
+  currency         String        @default("CLP")
+  status           PaymentStatus
+  subscriptionTier SubscriptionTier?
+  periodStart      DateTime?
+  periodEnd        DateTime?
+  metadata         Json?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  
+  @@index([userId])
+  @@index([externalId])
+  @@index([status])
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
