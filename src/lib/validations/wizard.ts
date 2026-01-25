@@ -43,7 +43,17 @@ export const step01Schema = z.object({
   region: z.string().min(1, 'Seleccione una región'),
   phone: z.string().regex(/^\+?56\s?\d{9}$/, 'Formato: +56 912345678'),
   email: z.string().email('Email inválido'),
-  website: z.string().url('URL inválida').optional().or(z.literal('')),
+  website: z.string()
+    .optional()
+    .or(z.literal(''))
+    .transform((val) => {
+      if (!val || val === '') return '';
+      // Si no tiene protocolo, agregar https://
+      if (!val.startsWith('http://') && !val.startsWith('https://')) {
+        return `https://${val}`;
+      }
+      return val;
+    }),
   hasDPO: z.boolean(),
   dpoName: z.string().optional().or(z.literal('')),
   dpoEmail: z.string().email('Email inválido').optional().or(z.literal('')),
