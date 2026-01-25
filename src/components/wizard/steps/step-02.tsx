@@ -127,14 +127,14 @@ export function Step02Form({ policyId }: Step02FormProps) {
               return (
                 <div
                   key={key}
-                  className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                  className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
                     isSelected
                       ? "bg-indigo-50 border-indigo-300"
                       : "bg-white border-slate-200 hover:bg-slate-50"
                   }`}
                   onClick={() => handleCategoryClick(categoryKey)}
                 >
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
                     isSelected ? "bg-indigo-600 border-indigo-600" : "border-slate-300"
                   }`}>
                     {isSelected && (
@@ -187,14 +187,14 @@ export function Step02Form({ policyId }: Step02FormProps) {
               return (
                 <div
                   key={key}
-                  className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                  className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
                     isSelected
                       ? "bg-amber-50 border-amber-300"
                       : "bg-white border-slate-200 hover:bg-slate-50"
                   }`}
                   onClick={() => handleCategoryClick(categoryKey)}
                 >
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
                     isSelected ? "bg-amber-600 border-amber-600" : "border-slate-300"
                   }`}>
                     {isSelected && (
@@ -227,14 +227,14 @@ export function Step02Form({ policyId }: Step02FormProps) {
         <h3 className="font-semibold text-slate-900">Datos de Menores</h3>
 
         <div
-          className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+          className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
             categories.minors
               ? "bg-purple-50 border-purple-300"
               : "bg-white border-slate-200 hover:bg-slate-50"
           }`}
           onClick={() => handleCategoryClick("minors")}
         >
-          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
             categories.minors ? "bg-purple-600 border-purple-600" : "border-slate-300"
           }`}>
             {categories.minors && (

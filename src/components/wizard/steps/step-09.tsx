@@ -92,14 +92,14 @@ export function Step09Form({ policyId }: Step09FormProps) {
           return (
             <div
               key={key}
-              className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+              className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
                 isSelected
                   ? "bg-indigo-50 border-indigo-300"
                   : "bg-white border-slate-200 hover:bg-slate-50"
               }`}
               onClick={() => handleSourceClick(key)}
             >
-              <CustomCheckbox checked={isSelected} className="mt-0.5" />
+              <CustomCheckbox checked={isSelected} />
               <div>
                 <Label className="font-medium cursor-pointer">{label}</Label>
                 <p className="text-sm text-slate-500">{desc}</p>

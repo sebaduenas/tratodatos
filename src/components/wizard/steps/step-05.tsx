@@ -105,8 +105,8 @@ export function Step05Form({ policyId }: Step05FormProps) {
               }`}
               onClick={() => handleBaseClick(baseKey)}
             >
-              <div className="flex items-start space-x-3">
-                <CustomCheckbox checked={isSelected} className="mt-0.5" />
+              <div className="flex items-center space-x-3">
+                <CustomCheckbox checked={isSelected} />
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <Label className="font-medium cursor-pointer">{base.name}</Label>

@@ -113,7 +113,7 @@ export function Step03Form({ policyId }: Step03FormProps) {
           return (
             <div
               key={key}
-              className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+              className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
                 isSelected
                   ? isMinor
                     ? "bg-purple-50 border-purple-300"
@@ -122,7 +122,7 @@ export function Step03Form({ policyId }: Step03FormProps) {
               }`}
               onClick={() => handleSubjectClick(subjectKey)}
             >
-              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
                 isSelected 
                   ? isMinor 
                     ? "bg-purple-600 border-purple-600" 
