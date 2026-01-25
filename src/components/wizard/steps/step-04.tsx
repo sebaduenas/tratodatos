@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Info, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CustomCheckbox } from "@/components/ui/custom-checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useWizardStore } from "@/store/wizard-store";
@@ -16,9 +16,28 @@ interface Step04FormProps {
   policyId: string;
 }
 
+type PurposeKey = keyof Step04FormData["purposes"];
+
 export function Step04Form({ policyId }: Step04FormProps) {
   const router = useRouter();
   const { data, setStepData, markStepCompleted, setIsSaving, isSaving } = useWizardStore();
+
+  const defaultPurposes: Step04FormData["purposes"] = {
+    contractExecution: false,
+    serviceProvision: false,
+    billing: false,
+    customerSupport: false,
+    marketing: false,
+    profiling: false,
+    analytics: false,
+    legalCompliance: false,
+    taxObligations: false,
+    employmentManagement: false,
+    security: false,
+    qualityControl: false,
+    research: false,
+    other: false,
+  };
 
   const {
     watch,
@@ -28,42 +47,22 @@ export function Step04Form({ policyId }: Step04FormProps) {
   } = useForm<Step04FormData>({
     resolver: zodResolver(step04Schema),
     defaultValues: data.step04 || {
-      purposes: {
-        contractExecution: false,
-        serviceProvision: false,
-        billing: false,
-        customerSupport: false,
-        marketing: false,
-        profiling: false,
-        analytics: false,
-        legalCompliance: false,
-        taxObligations: false,
-        employmentManagement: false,
-        security: false,
-        qualityControl: false,
-        research: false,
-        other: false,
-      },
+      purposes: defaultPurposes,
       customPurposes: [],
     },
   });
 
-  const purposes = watch("purposes");
+  const purposes = watch("purposes") || defaultPurposes;
 
   const onSubmit = async (formData: Step04FormData) => {
     setIsSaving(true);
-
     try {
       const response = await fetch(`/api/policies/${policyId}/steps/4`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: formData }),
       });
-
-      if (!response.ok) {
-        throw new Error("Error al guardar");
-      }
-
+      if (!response.ok) throw new Error("Error al guardar");
       setStepData("step04", formData);
       markStepCompleted(4);
       toast.success("Paso 4 guardado correctamente");
@@ -75,8 +74,9 @@ export function Step04Form({ policyId }: Step04FormProps) {
     }
   };
 
-  const togglePurpose = (purposeId: keyof typeof purposes) => {
-    setValue(`purposes.${purposeId}`, !purposes[purposeId]);
+  const handlePurposeClick = (purposeId: PurposeKey) => {
+    const currentValue = purposes[purposeId];
+    setValue(`purposes.${purposeId}`, !currentValue, { shouldValidate: true });
   };
 
   const groupedPurposes = {
@@ -84,6 +84,37 @@ export function Step04Form({ policyId }: Step04FormProps) {
     operational: Object.entries(PURPOSES).filter(([_, p]) => p.category === "operational"),
     legal: Object.entries(PURPOSES).filter(([_, p]) => p.category === "legal"),
     commercial: Object.entries(PURPOSES).filter(([_, p]) => p.category === "commercial"),
+  };
+
+  const renderPurposeItem = (key: string, purpose: typeof PURPOSES[keyof typeof PURPOSES], isCommercial = false) => {
+    const purposeKey = key as PurposeKey;
+    const isSelected = purposes[purposeKey];
+    return (
+      <div
+        key={key}
+        className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+          isSelected
+            ? isCommercial ? "bg-amber-50 border-amber-300" : "bg-indigo-50 border-indigo-300"
+            : "bg-white border-slate-200 hover:bg-slate-50"
+        }`}
+        onClick={() => handlePurposeClick(purposeKey)}
+      >
+        <CustomCheckbox checked={isSelected} color={isCommercial ? "amber" : "indigo"} className="mt-0.5" />
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <Label className="font-medium cursor-pointer">{purpose.name}</Label>
+            {isCommercial && (
+              <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                Consentimiento
+              </span>
+            )}
+          </div>
+          {"warning" in purpose && (
+            <p className="text-xs text-amber-600 mt-1">{purpose.warning}</p>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -107,23 +138,7 @@ export function Step04Form({ policyId }: Step04FormProps) {
       <div className="space-y-4">
         <h3 className="font-semibold text-slate-900">Finalidades Contractuales</h3>
         <div className="grid md:grid-cols-2 gap-4">
-          {groupedPurposes.contractual.map(([key, purpose]) => (
-            <div
-              key={key}
-              className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                purposes[key as keyof typeof purposes]
-                  ? "bg-indigo-50 border-indigo-300"
-                  : "bg-white border-slate-200 hover:bg-slate-50"
-              }`}
-              onClick={() => togglePurpose(key as keyof typeof purposes)}
-            >
-              <Checkbox
-                checked={purposes[key as keyof typeof purposes]}
-                onCheckedChange={() => togglePurpose(key as keyof typeof purposes)}
-              />
-              <Label className="font-medium cursor-pointer">{purpose.name}</Label>
-            </div>
-          ))}
+          {groupedPurposes.contractual.map(([key, purpose]) => renderPurposeItem(key, purpose))}
         </div>
       </div>
 
@@ -131,23 +146,7 @@ export function Step04Form({ policyId }: Step04FormProps) {
       <div className="space-y-4">
         <h3 className="font-semibold text-slate-900">Finalidades Operacionales</h3>
         <div className="grid md:grid-cols-2 gap-4">
-          {groupedPurposes.operational.map(([key, purpose]) => (
-            <div
-              key={key}
-              className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                purposes[key as keyof typeof purposes]
-                  ? "bg-indigo-50 border-indigo-300"
-                  : "bg-white border-slate-200 hover:bg-slate-50"
-              }`}
-              onClick={() => togglePurpose(key as keyof typeof purposes)}
-            >
-              <Checkbox
-                checked={purposes[key as keyof typeof purposes]}
-                onCheckedChange={() => togglePurpose(key as keyof typeof purposes)}
-              />
-              <Label className="font-medium cursor-pointer">{purpose.name}</Label>
-            </div>
-          ))}
+          {groupedPurposes.operational.map(([key, purpose]) => renderPurposeItem(key, purpose))}
         </div>
       </div>
 
@@ -155,23 +154,7 @@ export function Step04Form({ policyId }: Step04FormProps) {
       <div className="space-y-4">
         <h3 className="font-semibold text-slate-900">Finalidades Legales</h3>
         <div className="grid md:grid-cols-2 gap-4">
-          {groupedPurposes.legal.map(([key, purpose]) => (
-            <div
-              key={key}
-              className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                purposes[key as keyof typeof purposes]
-                  ? "bg-indigo-50 border-indigo-300"
-                  : "bg-white border-slate-200 hover:bg-slate-50"
-              }`}
-              onClick={() => togglePurpose(key as keyof typeof purposes)}
-            >
-              <Checkbox
-                checked={purposes[key as keyof typeof purposes]}
-                onCheckedChange={() => togglePurpose(key as keyof typeof purposes)}
-              />
-              <Label className="font-medium cursor-pointer">{purpose.name}</Label>
-            </div>
-          ))}
+          {groupedPurposes.legal.map(([key, purpose]) => renderPurposeItem(key, purpose))}
         </div>
       </div>
 
@@ -184,33 +167,7 @@ export function Step04Form({ policyId }: Step04FormProps) {
           </h3>
         </div>
         <div className="grid md:grid-cols-2 gap-4">
-          {groupedPurposes.commercial.map(([key, purpose]) => (
-            <div
-              key={key}
-              className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                purposes[key as keyof typeof purposes]
-                  ? "bg-amber-50 border-amber-300"
-                  : "bg-white border-slate-200 hover:bg-slate-50"
-              }`}
-              onClick={() => togglePurpose(key as keyof typeof purposes)}
-            >
-              <Checkbox
-                checked={purposes[key as keyof typeof purposes]}
-                onCheckedChange={() => togglePurpose(key as keyof typeof purposes)}
-              />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <Label className="font-medium cursor-pointer">{purpose.name}</Label>
-                  <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-                    Consentimiento
-                  </span>
-                </div>
-                {"warning" in purpose && (
-                  <p className="text-xs text-amber-600 mt-1">{purpose.warning}</p>
-                )}
-              </div>
-            </div>
-          ))}
+          {groupedPurposes.commercial.map(([key, purpose]) => renderPurposeItem(key, purpose, true))}
         </div>
       </div>
 

@@ -3,9 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Info, Scale } from "lucide-react";
+import { Loader2, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CustomCheckbox } from "@/components/ui/custom-checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
@@ -17,9 +17,20 @@ interface Step05FormProps {
   policyId: string;
 }
 
+type BaseKey = keyof Step05FormData["bases"];
+
 export function Step05Form({ policyId }: Step05FormProps) {
   const router = useRouter();
   const { data, setStepData, markStepCompleted, setIsSaving, isSaving } = useWizardStore();
+
+  const defaultBases: Step05FormData["bases"] = {
+    consent: false,
+    contract: false,
+    legalObligation: false,
+    vitalInterest: false,
+    publicInterest: false,
+    legitimateInterest: false,
+  };
 
   const {
     watch,
@@ -30,20 +41,13 @@ export function Step05Form({ policyId }: Step05FormProps) {
   } = useForm<Step05FormData>({
     resolver: zodResolver(step05Schema),
     defaultValues: data.step05 || {
-      bases: {
-        consent: false,
-        contract: false,
-        legalObligation: false,
-        vitalInterest: false,
-        publicInterest: false,
-        legitimateInterest: false,
-      },
+      bases: defaultBases,
       consentDetails: undefined,
       legitimateInterestAssessment: undefined,
     },
   });
 
-  const bases = watch("bases");
+  const bases = watch("bases") || defaultBases;
 
   const onSubmit = async (formData: Step05FormData) => {
     setIsSaving(true);
@@ -65,8 +69,9 @@ export function Step05Form({ policyId }: Step05FormProps) {
     }
   };
 
-  const toggleBase = (baseId: keyof typeof bases) => {
-    setValue(`bases.${baseId}`, !bases[baseId]);
+  const handleBaseClick = (baseId: BaseKey) => {
+    const currentValue = bases[baseId];
+    setValue(`bases.${baseId}`, !currentValue, { shouldValidate: true });
   };
 
   return (
@@ -87,36 +92,37 @@ export function Step05Form({ policyId }: Step05FormProps) {
       </div>
 
       <div className="space-y-4">
-        {Object.entries(LEGAL_BASES).map(([key, base]) => (
-          <div
-            key={key}
-            className={`p-4 rounded-lg border cursor-pointer transition-colors ${
-              bases[key as keyof typeof bases]
-                ? "bg-indigo-50 border-indigo-300"
-                : "bg-white border-slate-200 hover:bg-slate-50"
-            }`}
-            onClick={() => toggleBase(key as keyof typeof bases)}
-          >
-            <div className="flex items-start space-x-3">
-              <Checkbox
-                checked={bases[key as keyof typeof bases]}
-                onCheckedChange={() => toggleBase(key as keyof typeof bases)}
-              />
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <Label className="font-medium cursor-pointer">{base.name}</Label>
-                  <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
-                    {base.article}
-                  </span>
+        {Object.entries(LEGAL_BASES).map(([key, base]) => {
+          const baseKey = key as BaseKey;
+          const isSelected = bases[baseKey];
+          return (
+            <div
+              key={key}
+              className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                isSelected
+                  ? "bg-indigo-50 border-indigo-300"
+                  : "bg-white border-slate-200 hover:bg-slate-50"
+              }`}
+              onClick={() => handleBaseClick(baseKey)}
+            >
+              <div className="flex items-start space-x-3">
+                <CustomCheckbox checked={isSelected} className="mt-0.5" />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Label className="font-medium cursor-pointer">{base.name}</Label>
+                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">
+                      {base.article}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-600 mt-1">{base.description}</p>
+                  {"warning" in base && (
+                    <p className="text-xs text-amber-600 mt-2">⚠️ {base.warning}</p>
+                  )}
                 </div>
-                <p className="text-sm text-slate-600 mt-1">{base.description}</p>
-                {"warning" in base && (
-                  <p className="text-xs text-amber-600 mt-2">⚠️ {base.warning}</p>
-                )}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {bases.consent && (

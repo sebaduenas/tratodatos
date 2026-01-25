@@ -5,11 +5,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Info, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useWizardStore } from "@/store/wizard-store";
 import { step03Schema, type Step03FormData } from "@/lib/validations/wizard";
@@ -19,9 +17,24 @@ interface Step03FormProps {
   policyId: string;
 }
 
+type SubjectKey = keyof Step03FormData["subjects"];
+
 export function Step03Form({ policyId }: Step03FormProps) {
   const router = useRouter();
   const { data, setStepData, markStepCompleted, setIsSaving, isSaving } = useWizardStore();
+
+  const defaultSubjects: Step03FormData["subjects"] = {
+    customers: false,
+    employees: false,
+    contractors: false,
+    suppliers: false,
+    websiteVisitors: false,
+    appUsers: false,
+    patients: false,
+    students: false,
+    minors: false,
+    other: false,
+  };
 
   const {
     watch,
@@ -32,25 +45,14 @@ export function Step03Form({ policyId }: Step03FormProps) {
   } = useForm<Step03FormData>({
     resolver: zodResolver(step03Schema),
     defaultValues: data.step03 || {
-      subjects: {
-        customers: false,
-        employees: false,
-        contractors: false,
-        suppliers: false,
-        websiteVisitors: false,
-        appUsers: false,
-        patients: false,
-        students: false,
-        minors: false,
-        other: false,
-      },
+      subjects: defaultSubjects,
       customSubjects: [],
       processesMinorData: false,
       minorDataDetails: undefined,
     },
   });
 
-  const subjects = watch("subjects");
+  const subjects = watch("subjects") || defaultSubjects;
   const processesMinorData = watch("processesMinorData");
 
   const onSubmit = async (formData: Step03FormData) => {
@@ -78,10 +80,11 @@ export function Step03Form({ policyId }: Step03FormProps) {
     }
   };
 
-  const toggleSubject = (subjectId: keyof typeof subjects) => {
-    setValue(`subjects.${subjectId}`, !subjects[subjectId]);
+  const handleSubjectClick = (subjectId: SubjectKey) => {
+    const currentValue = subjects[subjectId];
+    setValue(`subjects.${subjectId}`, !currentValue, { shouldValidate: true });
     if (subjectId === "minors") {
-      setValue("processesMinorData", !subjects[subjectId]);
+      setValue("processesMinorData", !currentValue);
     }
   };
 
@@ -103,34 +106,48 @@ export function Step03Form({ policyId }: Step03FormProps) {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4">
-        {Object.entries(DATA_SUBJECTS).map(([key, subject]) => (
-          <div
-            key={key}
-            className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-              subjects[key as keyof typeof subjects]
-                ? key === "minors"
-                  ? "bg-purple-50 border-purple-300"
-                  : "bg-indigo-50 border-indigo-300"
-                : "bg-white border-slate-200 hover:bg-slate-50"
-            }`}
-            onClick={() => toggleSubject(key as keyof typeof subjects)}
-          >
-            <Checkbox
-              checked={subjects[key as keyof typeof subjects]}
-              onCheckedChange={() => toggleSubject(key as keyof typeof subjects)}
-            />
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <Label className="font-medium cursor-pointer">{subject.name}</Label>
-                {key === "minors" && (
-                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
-                    Protección Especial
-                  </span>
+        {Object.entries(DATA_SUBJECTS).map(([key, subject]) => {
+          const subjectKey = key as SubjectKey;
+          const isSelected = subjects[subjectKey];
+          const isMinor = key === "minors";
+          return (
+            <div
+              key={key}
+              className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                isSelected
+                  ? isMinor
+                    ? "bg-purple-50 border-purple-300"
+                    : "bg-indigo-50 border-indigo-300"
+                  : "bg-white border-slate-200 hover:bg-slate-50"
+              }`}
+              onClick={() => handleSubjectClick(subjectKey)}
+            >
+              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                isSelected 
+                  ? isMinor 
+                    ? "bg-purple-600 border-purple-600" 
+                    : "bg-indigo-600 border-indigo-600" 
+                  : "border-slate-300"
+              }`}>
+                {isSelected && (
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
                 )}
               </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <Label className="font-medium cursor-pointer">{subject.name}</Label>
+                  {isMinor && (
+                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                      Protección Especial
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {errors.subjects && (

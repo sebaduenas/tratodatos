@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CustomCheckbox } from "@/components/ui/custom-checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { useWizardStore } from "@/store/wizard-store";
@@ -18,28 +18,32 @@ interface Step07FormProps {
   policyId: string;
 }
 
+type MechanismKey = keyof Step07FormData["mechanisms"];
+
 export function Step07Form({ policyId }: Step07FormProps) {
   const router = useRouter();
   const { data, setStepData, markStepCompleted, setIsSaving, isSaving } = useWizardStore();
+
+  const defaultMechanisms: Step07FormData["mechanisms"] = {
+    adequacyDecision: false,
+    standardClauses: false,
+    bindingCorporateRules: false,
+    explicitConsent: false,
+    contractNecessity: false,
+  };
 
   const { watch, setValue, handleSubmit } = useForm<Step07FormData>({
     resolver: zodResolver(step07Schema),
     defaultValues: data.step07 || {
       hasInternationalTransfers: false,
       transfers: [],
-      mechanisms: {
-        adequacyDecision: false,
-        standardClauses: false,
-        bindingCorporateRules: false,
-        explicitConsent: false,
-        contractNecessity: false,
-      },
+      mechanisms: defaultMechanisms,
     },
   });
 
   const hasTransfers = watch("hasInternationalTransfers");
   const transfers = watch("transfers") || [];
-  const mechanisms = watch("mechanisms");
+  const mechanisms = watch("mechanisms") || defaultMechanisms;
 
   const onSubmit = async (formData: Step07FormData) => {
     setIsSaving(true);
@@ -72,12 +76,17 @@ export function Step07Form({ policyId }: Step07FormProps) {
     setValue("transfers", transfers.filter((t) => t.id !== id));
   };
 
+  const handleMechanismClick = (key: MechanismKey) => {
+    const currentValue = mechanisms[key];
+    setValue(`mechanisms.${key}`, !currentValue, { shouldValidate: true });
+  };
+
   const mechanismOptions = [
-    { key: "adequacyDecision", label: "Decisión de adecuación" },
-    { key: "standardClauses", label: "Cláusulas contractuales tipo" },
-    { key: "bindingCorporateRules", label: "Normas corporativas vinculantes" },
-    { key: "explicitConsent", label: "Consentimiento explícito" },
-    { key: "contractNecessity", label: "Necesidad contractual" },
+    { key: "adequacyDecision" as MechanismKey, label: "Decisión de adecuación" },
+    { key: "standardClauses" as MechanismKey, label: "Cláusulas contractuales tipo" },
+    { key: "bindingCorporateRules" as MechanismKey, label: "Normas corporativas vinculantes" },
+    { key: "explicitConsent" as MechanismKey, label: "Consentimiento explícito" },
+    { key: "contractNecessity" as MechanismKey, label: "Necesidad contractual" },
   ];
 
   return (
@@ -172,22 +181,23 @@ export function Step07Form({ policyId }: Step07FormProps) {
           <div className="space-y-4">
             <h4 className="font-medium">Mecanismos de Transferencia</h4>
             <div className="grid md:grid-cols-2 gap-4">
-              {mechanismOptions.map(({ key, label }) => (
-                <div
-                  key={key}
-                  className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer ${
-                    mechanisms[key as keyof typeof mechanisms]
-                      ? "bg-indigo-50 border-indigo-300"
-                      : "bg-white border-slate-200 hover:bg-slate-50"
-                  }`}
-                  onClick={() =>
-                    setValue(`mechanisms.${key as keyof typeof mechanisms}`, !mechanisms[key as keyof typeof mechanisms])
-                  }
-                >
-                  <Checkbox checked={mechanisms[key as keyof typeof mechanisms]} />
-                  <Label className="cursor-pointer">{label}</Label>
-                </div>
-              ))}
+              {mechanismOptions.map(({ key, label }) => {
+                const isSelected = mechanisms[key];
+                return (
+                  <div
+                    key={key}
+                    className={`flex items-center space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                      isSelected
+                        ? "bg-indigo-50 border-indigo-300"
+                        : "bg-white border-slate-200 hover:bg-slate-50"
+                    }`}
+                    onClick={() => handleMechanismClick(key)}
+                  >
+                    <CustomCheckbox checked={isSelected} />
+                    <Label className="cursor-pointer">{label}</Label>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </>

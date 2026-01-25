@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Download, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { CustomCheckbox } from "@/components/ui/custom-checkbox";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useWizardStore } from "@/store/wizard-store";
@@ -15,7 +15,9 @@ interface Step09FormProps {
   policyId: string;
 }
 
-const sourceOptions = [
+type SourceKey = keyof Step09FormData["sources"];
+
+const sourceOptions: { key: SourceKey; label: string; desc: string }[] = [
   { key: "directFromSubject", label: "Directamente del titular", desc: "Formularios, contratos, comunicaciones" },
   { key: "publicSources", label: "Fuentes públicas", desc: "Registros públicos, sitios web, redes sociales" },
   { key: "thirdParties", label: "Terceros", desc: "Socios comerciales, proveedores de datos" },
@@ -26,22 +28,24 @@ export function Step09Form({ policyId }: Step09FormProps) {
   const router = useRouter();
   const { data, setStepData, markStepCompleted, setIsSaving, isSaving } = useWizardStore();
 
+  const defaultSources: Step09FormData["sources"] = {
+    directFromSubject: false,
+    publicSources: false,
+    thirdParties: false,
+    automaticCollection: false,
+  };
+
   const { watch, setValue, handleSubmit, formState: { errors } } = useForm<Step09FormData>({
     resolver: zodResolver(step09Schema),
     defaultValues: data.step09 || {
-      sources: {
-        directFromSubject: false,
-        publicSources: false,
-        thirdParties: false,
-        automaticCollection: false,
-      },
+      sources: defaultSources,
       thirdPartySources: [],
       publicSources: [],
       automaticCollectionMethods: [],
     },
   });
 
-  const sources = watch("sources");
+  const sources = watch("sources") || defaultSources;
 
   const onSubmit = async (formData: Step09FormData) => {
     setIsSaving(true);
@@ -63,8 +67,9 @@ export function Step09Form({ policyId }: Step09FormProps) {
     }
   };
 
-  const toggleSource = (key: keyof typeof sources) => {
-    setValue(`sources.${key}`, !sources[key]);
+  const handleSourceClick = (key: SourceKey) => {
+    const currentValue = sources[key];
+    setValue(`sources.${key}`, !currentValue, { shouldValidate: true });
   };
 
   return (
@@ -82,26 +87,26 @@ export function Step09Form({ policyId }: Step09FormProps) {
       </div>
 
       <div className="space-y-4">
-        {sourceOptions.map(({ key, label, desc }) => (
-          <div
-            key={key}
-            className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-              sources[key as keyof typeof sources]
-                ? "bg-indigo-50 border-indigo-300"
-                : "bg-white border-slate-200 hover:bg-slate-50"
-            }`}
-            onClick={() => toggleSource(key as keyof typeof sources)}
-          >
-            <Checkbox
-              checked={sources[key as keyof typeof sources]}
-              onCheckedChange={() => toggleSource(key as keyof typeof sources)}
-            />
-            <div>
-              <Label className="font-medium cursor-pointer">{label}</Label>
-              <p className="text-sm text-slate-500">{desc}</p>
+        {sourceOptions.map(({ key, label, desc }) => {
+          const isSelected = sources[key];
+          return (
+            <div
+              key={key}
+              className={`flex items-start space-x-3 p-4 rounded-lg border cursor-pointer transition-colors ${
+                isSelected
+                  ? "bg-indigo-50 border-indigo-300"
+                  : "bg-white border-slate-200 hover:bg-slate-50"
+              }`}
+              onClick={() => handleSourceClick(key)}
+            >
+              <CustomCheckbox checked={isSelected} className="mt-0.5" />
+              <div>
+                <Label className="font-medium cursor-pointer">{label}</Label>
+                <p className="text-sm text-slate-500">{desc}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {errors.sources && <p className="text-sm text-red-500">{errors.sources.message}</p>}
