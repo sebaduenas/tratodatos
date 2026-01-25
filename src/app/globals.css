@@ -135,9 +135,19 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Offset for fixed header when scrolling to anchors */
+  section[id] {
+    scroll-margin-top: 5rem;
   }
   
   /* Typography improvements */

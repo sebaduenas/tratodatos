@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Shield, Menu, X } from "lucide-react";
+import { Shield, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -21,6 +21,25 @@ const navItems = [
 export function LandingHeader() {
   const [isOpen, setIsOpen] = useState(false);
 
+  const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    const targetId = href.replace("#", "");
+    const element = document.getElementById(targetId);
+    
+    if (element) {
+      const headerOffset = 80; // Height of fixed header
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+    }
+    
+    setIsOpen(false);
+  };
+
   return (
     <header className="fixed top-0 w-full z-50 bg-white border-b border-slate-100">
       <div className="container mx-auto px-6 h-20 flex items-center justify-between">
@@ -34,13 +53,14 @@ export function LandingHeader() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-10">
           {navItems.map((item) => (
-            <Link
+            <a
               key={item.href}
               href={item.href}
-              className="text-slate-600 hover:text-slate-900 transition-colors"
+              onClick={(e) => scrollToSection(e, item.href)}
+              className="text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
             >
               {item.label}
-            </Link>
+            </a>
           ))}
         </nav>
 
@@ -87,14 +107,14 @@ export function LandingHeader() {
 
             <nav className="flex flex-col gap-4 mt-8">
               {navItems.map((item) => (
-                <Link
+                <a
                   key={item.href}
                   href={item.href}
-                  onClick={() => setIsOpen(false)}
-                  className="text-lg text-slate-600 hover:text-slate-900 transition-colors py-2 border-b border-slate-100"
+                  onClick={(e) => scrollToSection(e, item.href)}
+                  className="text-lg text-slate-600 hover:text-slate-900 transition-colors py-2 border-b border-slate-100 cursor-pointer"
                 >
                   {item.label}
-                </Link>
+                </a>
               ))}
             </nav>
 
