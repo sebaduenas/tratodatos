@@ -1,9 +1,19 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Shield, ArrowLeft } from "lucide-react";
 
-export const metadata = {
-  title: "Política de Privacidad - TratoDatos",
-  description: "Política de privacidad y tratamiento de datos personales de TratoDatos",
+export const metadata: Metadata = {
+  title: "Política de Privacidad",
+  description:
+    "Política de privacidad de TratoDatos. Conoce cómo tratamos tus datos personales conforme a la Ley 21.719 de Chile.",
+  alternates: {
+    canonical: "https://tratodatos.cl/privacidad",
+  },
+  openGraph: {
+    title: "Política de Privacidad - TratoDatos",
+    description: "Política de privacidad y tratamiento de datos personales de TratoDatos",
+    url: "https://tratodatos.cl/privacidad",
+  },
 };
 
 export default function PrivacidadPage() {

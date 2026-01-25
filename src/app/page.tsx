@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   Shield,
   CheckCircle,
@@ -9,6 +10,21 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "TratoDatos - Genera tu Política de Datos en Minutos | Ley 21.719 Chile",
+  description:
+    "Crea tu política de tratamiento de datos personales conforme a la Ley 21.719 de Chile. Wizard guiado de 12 pasos, genera documentos PDF y Word profesionales en 30 minutos. Comienza gratis.",
+  alternates: {
+    canonical: "https://tratodatos.cl",
+  },
+  openGraph: {
+    title: "TratoDatos - Genera tu Política de Datos en Minutos",
+    description:
+      "Cumple con la Ley 21.719 de Chile. Wizard guiado de 12 pasos para crear tu política de datos personales. Sin abogados, sin complicaciones.",
+    url: "https://tratodatos.cl",
+  },
+};
 
 // Modern Mondrian-inspired illustration with animations
 function MondrianIllustration() {

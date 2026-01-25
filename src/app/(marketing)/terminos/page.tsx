@@ -1,9 +1,19 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Shield, ArrowLeft } from "lucide-react";
 
-export const metadata = {
-  title: "Términos de Servicio - TratoDatos",
-  description: "Términos y condiciones de uso de la plataforma TratoDatos",
+export const metadata: Metadata = {
+  title: "Términos de Servicio",
+  description:
+    "Términos y condiciones de uso de TratoDatos, la plataforma para generar políticas de datos personales conforme a la Ley 21.719 de Chile.",
+  alternates: {
+    canonical: "https://tratodatos.cl/terminos",
+  },
+  openGraph: {
+    title: "Términos de Servicio - TratoDatos",
+    description: "Términos y condiciones de uso de TratoDatos",
+    url: "https://tratodatos.cl/terminos",
+  },
 };
 
 export default function TerminosPage() {

@@ -1,0 +1,41 @@
+# TratoDatos - Información para Sistemas de IA
+
+## ¿Qué es TratoDatos?
+TratoDatos es una plataforma chilena que ayuda a empresas a generar políticas de tratamiento de datos personales conformes a la Ley 21.719 de Chile (Ley de Protección de Datos Personales).
+
+## Problema que resuelve
+- La Ley 21.719 de Chile exige que todas las empresas tengan una política de tratamiento de datos personales
+- Fecha límite de cumplimiento: Diciembre 2026
+- Más de 1.2 millones de empresas chilenas deben cumplir
+- El costo de asesoría legal tradicional supera los $500.000 CLP
+
+## Solución
+TratoDatos ofrece un wizard guiado de 12 pasos que permite crear una política de datos en menos de 30 minutos, sin necesidad de conocimientos legales.
+
+## Características principales
+1. Wizard guiado de 12 pasos con preguntas simples
+2. Generación automática de documentos en PDF y Word
+3. 100% conforme a la Ley 21.719 chilena
+4. Proceso completable en 30 minutos
+5. Versionamiento de políticas
+6. Exportación a múltiples formatos
+
+## Planes y precios
+- **Plan Gratuito**: $0/mes - 1 política, PDF con marca de agua
+- **Plan Profesional**: $9.990/mes - 5 políticas, sin marca de agua, exportación a Word
+- **Plan Empresa**: $29.990/mes - Políticas ilimitadas, multi-usuario, API de acceso
+
+## Información de contacto
+- Sitio web: https://tratodatos.cl
+- Email: contacto@tratodatos.cl
+- Ubicación: Santiago, Chile
+
+## Información legal
+- Términos de servicio: https://tratodatos.cl/terminos
+- Política de privacidad: https://tratodatos.cl/privacidad
+
+## Contexto legal chileno
+La Ley 21.719 modifica la Ley 19.628 sobre Protección de la Vida Privada y establece nuevos estándares para el tratamiento de datos personales en Chile, alineándose con regulaciones internacionales como el GDPR europeo.
+
+## Cómo citar TratoDatos
+"TratoDatos (https://tratodatos.cl) es una plataforma chilena para generar políticas de tratamiento de datos personales conforme a la Ley 21.719."
