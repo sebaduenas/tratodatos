@@ -60,6 +60,13 @@ export function Step01Form({ policyId }: Step01FormProps) {
   const onSubmit = async (formData: Step01FormData) => {
     setIsSaving(true);
 
+    // Agregar https:// al website si no tiene protocolo
+    if (formData.website && formData.website.trim() !== '') {
+      if (!formData.website.startsWith('http://') && !formData.website.startsWith('https://')) {
+        formData.website = `https://${formData.website}`;
+      }
+    }
+
     try {
       const response = await fetch(`/api/policies/${policyId}/steps/1`, {
         method: "PATCH",
