@@ -15,6 +15,8 @@ declare module 'next-auth' {
       name: string | null;
       role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
       subscriptionTier: 'FREE' | 'PROFESSIONAL' | 'ENTERPRISE';
+      emailVerified: Date | null;
+      companyName: string | null;
     };
   }
 
@@ -24,6 +26,8 @@ declare module 'next-auth' {
     name: string | null;
     role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
     subscriptionTier: 'FREE' | 'PROFESSIONAL' | 'ENTERPRISE';
+    emailVerified: Date | null;
+    companyName: string | null;
   }
 }
 
@@ -32,6 +36,8 @@ declare module 'next-auth/jwt' {
     id: string;
     role: 'USER' | 'ADMIN' | 'SUPER_ADMIN';
     subscriptionTier: 'FREE' | 'PROFESSIONAL' | 'ENTERPRISE';
+    emailVerified: Date | null;
+    companyName: string | null;
   }
 }
 
@@ -86,16 +92,38 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           role: user.role,
           subscriptionTier: user.subscriptionTier,
+          emailVerified: user.emailVerified,
+          companyName: user.companyName,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.subscriptionTier = user.subscriptionTier;
+        token.emailVerified = user.emailVerified;
+        token.companyName = user.companyName;
+      }
+      // Update token on session update (e.g., after email verification)
+      if (trigger === "update") {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id },
+          select: {
+            name: true,
+            emailVerified: true,
+            subscriptionTier: true,
+            companyName: true,
+          },
+        });
+        if (dbUser) {
+          token.name = dbUser.name;
+          token.emailVerified = dbUser.emailVerified;
+          token.subscriptionTier = dbUser.subscriptionTier;
+          token.companyName = dbUser.companyName;
+        }
       }
       return token;
     },
@@ -104,6 +132,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.subscriptionTier = token.subscriptionTier;
+        session.user.emailVerified = token.emailVerified;
+        session.user.companyName = token.companyName;
       }
       return session;
     },
