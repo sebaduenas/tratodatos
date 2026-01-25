@@ -44,8 +44,6 @@ export const step01Schema = z.object({
   phone: z.string().regex(/^\+?56\s?\d{9}$/, 'Formato: +56 912345678'),
   email: z.string().email('Email inválido'),
   website: z.string()
-    .optional()
-    .or(z.literal(''))
     .transform((val) => {
       if (!val || val === '') return '';
       // Si no tiene protocolo, agregar https://
@@ -53,7 +51,9 @@ export const step01Schema = z.object({
         return `https://${val}`;
       }
       return val;
-    }),
+    })
+    .optional()
+    .default(''),
   hasDPO: z.boolean(),
   dpoName: z.string().optional().or(z.literal('')),
   dpoEmail: z.string().email('Email inválido').optional().or(z.literal('')),
