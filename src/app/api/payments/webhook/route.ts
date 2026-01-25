@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
     // Buscar pago en nuestra base de datos
     const payment = await prisma.payment.findUnique({
       where: { id: externalReference },
-      include: { user: true },
     });
 
     if (!payment) {
@@ -62,7 +61,6 @@ export async function POST(request: NextRequest) {
       data: {
         status,
         externalId: String(paymentId),
-        paidAt: status === "COMPLETED" ? new Date() : null,
       },
     });
 

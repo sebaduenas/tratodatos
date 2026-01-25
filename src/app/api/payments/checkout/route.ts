@@ -44,11 +44,12 @@ export async function POST(request: NextRequest) {
         currency: "CLP",
         status: "PENDING",
         provider: "MERCADOPAGO",
-        description,
+        externalId: `temp_${Date.now()}_${Math.random().toString(36).substring(7)}`,
         metadata: {
           plan,
           period,
           userEmail: session.user.email,
+          description,
         },
       },
     });

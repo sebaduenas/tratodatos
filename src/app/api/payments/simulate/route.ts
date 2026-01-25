@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
       where: { id: paymentId },
       data: {
         status,
-        paidAt: success ? new Date() : null,
       },
     });
 

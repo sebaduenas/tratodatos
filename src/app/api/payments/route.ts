@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
         currency: true,
         status: true,
         provider: true,
-        description: true,
+        metadata: true,
         createdAt: true,
-        paidAt: true,
+        subscriptionTier: true,
       },
     });
 

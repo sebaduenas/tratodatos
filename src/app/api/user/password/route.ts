@@ -26,10 +26,10 @@ export async function PATCH(request: NextRequest) {
     // Get user with password
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { password: true },
+      select: { passwordHash: true },
     });
 
-    if (!user?.password) {
+    if (!user?.passwordHash) {
       return NextResponse.json(
         { error: "Usuario no encontrado o sin contraseña" },
         { status: 400 }
@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest) {
     // Verify current password
     const isValidPassword = await bcrypt.compare(
       validatedData.currentPassword,
-      user.password
+      user.passwordHash
     );
 
     if (!isValidPassword) {
@@ -55,7 +55,7 @@ export async function PATCH(request: NextRequest) {
     // Update password
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { password: hashedPassword },
+      data: { passwordHash: hashedPassword },
     });
 
     // Audit log

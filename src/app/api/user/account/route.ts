@@ -23,11 +23,6 @@ export async function DELETE(request: NextRequest) {
         where: { policy: { userId: session.user.id } },
       });
 
-      // Delete wizard analytics
-      await tx.wizardAnalytics.deleteMany({
-        where: { userId: session.user.id },
-      });
-
       // Delete policies
       await tx.policy.deleteMany({
         where: { userId: session.user.id },

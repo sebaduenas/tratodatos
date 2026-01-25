@@ -7,7 +7,7 @@ import crypto from "crypto";
 // POST - Generate share link
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -16,7 +16,7 @@ export async function POST(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const policy = await prisma.policy.findFirst({
       where: { id, userId: session.user.id },
@@ -81,7 +81,7 @@ export async function POST(
 // DELETE - Revoke share link
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -90,7 +90,7 @@ export async function DELETE(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     await prisma.policy.update({
       where: { id, userId: session.user.id },

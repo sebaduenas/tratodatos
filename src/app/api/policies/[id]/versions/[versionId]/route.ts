@@ -7,7 +7,7 @@ import { Prisma } from "@prisma/client";
 // GET - Get specific version
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string; versionId: string } }
+  { params }: { params: Promise<{ id: string; versionId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -16,7 +16,7 @@ export async function GET(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const { id, versionId } = params;
+    const { id, versionId } = await params;
 
     // Verify policy belongs to user
     const policy = await prisma.policy.findFirst({
@@ -55,7 +55,7 @@ export async function GET(
 // POST - Restore this version
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; versionId: string } }
+  { params }: { params: Promise<{ id: string; versionId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -64,7 +64,7 @@ export async function POST(
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const { id, versionId } = params;
+    const { id, versionId } = await params;
 
     // Verify policy belongs to user
     const policy = await prisma.policy.findFirst({

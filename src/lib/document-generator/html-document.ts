@@ -47,21 +47,41 @@ export function generateHTMLDocument({
     if (!step02?.categories) return [];
     return Object.entries(step02.categories)
       .filter(([_, selected]) => selected)
-      .map(([key]) => DATA_CATEGORIES[key as keyof typeof DATA_CATEGORIES]?.label || key);
+      .map(([key]) => DATA_CATEGORIES[key as keyof typeof DATA_CATEGORIES]?.name || key);
   };
 
   const getSelectedPurposes = () => {
-    if (!step03?.purposes) return [];
-    return step03.purposes.map(
-      (p: string) => PURPOSES.find((purpose) => purpose.id === p)?.label || p
-    );
+    if (!step04?.purposes) return [];
+    return Object.entries(step04.purposes)
+      .filter(([_, selected]) => selected)
+      .map(([key]) => PURPOSES[key as keyof typeof PURPOSES]?.name || key);
   };
 
   const getSelectedLegalBases = () => {
-    if (!step04?.legalBases) return [];
-    return step04.legalBases.map(
-      (b: string) => LEGAL_BASES.find((base) => base.id === b)?.label || b
-    );
+    if (!step05?.bases) return [];
+    return Object.entries(step05.bases)
+      .filter(([_, selected]) => selected)
+      .map(([key]) => LEGAL_BASES[key as keyof typeof LEGAL_BASES]?.name || key);
+  };
+
+  const SUBJECT_LABELS: Record<string, string> = {
+    customers: "Clientes",
+    employees: "Empleados",
+    contractors: "Contratistas",
+    suppliers: "Proveedores",
+    websiteVisitors: "Visitantes del sitio web",
+    appUsers: "Usuarios de aplicaciones",
+    patients: "Pacientes",
+    students: "Estudiantes",
+    minors: "Menores de edad",
+    other: "Otros",
+  };
+
+  const getSelectedSubjects = () => {
+    if (!step03?.subjects) return [];
+    return Object.entries(step03.subjects)
+      .filter(([_, selected]) => selected)
+      .map(([key]) => SUBJECT_LABELS[key] || key);
   };
 
   const html = `<!DOCTYPE html>
@@ -277,9 +297,9 @@ export function generateHTMLDocument({
       <div class="info-box">
         <p><strong>Razón Social:</strong> ${step01?.companyName || "No especificado"}</p>
         ${step01?.rut ? `<p><strong>RUT:</strong> ${step01.rut}</p>` : ""}
-        ${step01?.address ? `<p><strong>Dirección:</strong> ${step01.address}${step01.commune ? `, ${step01.commune}` : ""}${step01.region ? `, ${step01.region}` : ""}</p>` : ""}
+        ${step01?.address ? `<p><strong>Dirección:</strong> ${step01.address}${step01.city ? `, ${step01.city}` : ""}${step01.region ? `, ${step01.region}` : ""}</p>` : ""}
         ${step01?.website ? `<p><strong>Sitio Web:</strong> ${step01.website}</p>` : ""}
-        ${step01?.industry ? `<p><strong>Industria:</strong> ${step01.industry}</p>` : ""}
+        ${step01?.email ? `<p><strong>Contacto:</strong> ${step01.email}</p>` : ""}
       </div>
     </section>
 
@@ -307,10 +327,10 @@ export function generateHTMLDocument({
       <ul>
         ${getSelectedPurposes().map((purpose) => `<li>${purpose}</li>`).join("\n        ")}
       </ul>
-      ${step03?.customPurposes?.length ? `
+      ${step04?.customPurposes?.length ? `
       <h3>Finalidades Adicionales</h3>
       <ul>
-        ${step03.customPurposes.map((p: { name: string; description: string }) => `<li><strong>${p.name}:</strong> ${p.description}</li>`).join("\n        ")}
+        ${step04.customPurposes.map((p: { description: string; category: string }) => `<li>${p.description}</li>`).join("\n        ")}
       </ul>
       ` : ""}
     </section>
@@ -327,23 +347,14 @@ export function generateHTMLDocument({
       <h2>5. Titulares de los Datos</h2>
       <p>Esta política aplica a los siguientes grupos de personas:</p>
       <ul>
-        ${step05?.dataSubjects?.map((subject: string) => `<li>${subject}</li>`).join("\n        ") || "<li>Clientes y usuarios</li>"}
+        ${getSelectedSubjects().map((subject) => `<li>${subject}</li>`).join("\n        ") || "<li>Clientes y usuarios</li>"}
       </ul>
     </section>
 
     <section id="transferencias">
       <h2>6. Transferencias de Datos</h2>
-      ${step06?.hasTransfers ? `
-      <p>Sus datos personales pueden ser transferidos a:</p>
-      <ul>
-        ${step06.recipients?.map((r: string) => `<li>${r}</li>`).join("\n        ") || ""}
-      </ul>
-      ${step06.hasInternationalTransfers ? `
-      <div class="info-box">
-        <p><strong>Transferencias Internacionales:</strong> Algunos datos pueden ser transferidos fuera de Chile. En estos casos, nos aseguramos de que existan garantías adecuadas para la protección de sus datos.</p>
-        ${step06.internationalCountries?.length ? `<p>Países: ${step06.internationalCountries.join(", ")}</p>` : ""}
-      </div>
-      ` : ""}
+      ${step06?.sharesData ? `
+      <p>Sus datos personales pueden ser compartidos con terceros para cumplir con las finalidades indicadas.</p>
       ` : `
       <p>No realizamos transferencias de sus datos personales a terceros, salvo las requeridas por ley.</p>
       `}
@@ -351,19 +362,12 @@ export function generateHTMLDocument({
 
     <section id="seguridad">
       <h2>7. Medidas de Seguridad</h2>
-      <p>Hemos implementado las siguientes medidas para proteger sus datos personales:</p>
-      <ul>
-        ${step07?.securityMeasures?.map((measure: string) => `<li>${measure}</li>`).join("\n        ") || "<li>Medidas técnicas y organizativas apropiadas</li>"}
-      </ul>
+      <p>Hemos implementado medidas técnicas y organizativas apropiadas para proteger sus datos personales contra acceso no autorizado, pérdida o destrucción.</p>
     </section>
 
     <section id="conservacion">
       <h2>8. Plazos de Conservación</h2>
-      <p>Sus datos personales serán conservados durante <strong>${RETENTION_PERIODS[step08?.defaultPeriod] || step08?.defaultPeriod || "el tiempo necesario"}</strong> para cumplir con las finalidades descritas.</p>
-      ${step08?.deletionProcess ? `
-      <h3>Proceso de Eliminación</h3>
-      <p>${step08.deletionProcess}</p>
-      ` : ""}
+      <p>Sus datos personales serán conservados durante <strong>${RETENTION_PERIODS[step08?.defaultPeriod as string] || step08?.defaultPeriod || "el tiempo necesario"}</strong> para cumplir con las finalidades descritas.</p>
     </section>
 
     <section id="derechos">
@@ -376,46 +380,45 @@ export function generateHTMLDocument({
         <li><strong>Oposición:</strong> Oponerse al tratamiento en determinadas circunstancias.</li>
         <li><strong>Portabilidad:</strong> Recibir sus datos en un formato estructurado y de uso común.</li>
       </ul>
-      ${step09?.exerciseProcess ? `
+      ${step12?.rightsExerciseProcess ? `
       <h3>¿Cómo Ejercer sus Derechos?</h3>
-      <p>${step09.exerciseProcess}</p>
+      <p>${step12.rightsExerciseProcess}</p>
       ` : ""}
-      ${step09?.responseTime ? `
-      <p><strong>Plazo de Respuesta:</strong> ${step09.responseTime} días hábiles.</p>
+      ${step12?.responseTime ? `
+      <p><strong>Plazo de Respuesta:</strong> ${step12.responseTime}</p>
       ` : ""}
     </section>
 
-    <section id="cookies">
-      <h2>10. Cookies y Tecnologías Similares</h2>
-      ${step10?.usesCookies ? `
-      <p>Utilizamos cookies y tecnologías similares en nuestro sitio web para:</p>
-      <ul>
-        ${step10.cookieTypes?.map((type: string) => `<li>${type}</li>`).join("\n        ") || "<li>Mejorar su experiencia de navegación</li>"}
-      </ul>
-      ${step10.cookieConsent ? `
-      <p>Puede gestionar sus preferencias de cookies a través de la configuración de su navegador o nuestro banner de cookies.</p>
-      ` : ""}
+    <section id="decisiones">
+      <h2>10. Decisiones Automatizadas</h2>
+      ${step10?.hasAutomatedDecisions ? `
+      <p>Utilizamos sistemas de decisiones automatizadas. Usted tiene derecho a solicitar revisión humana de estas decisiones.</p>
       ` : `
-      <p>Actualmente no utilizamos cookies en nuestro sitio web.</p>
+      <p>No utilizamos sistemas de decisiones automatizadas que le afecten significativamente.</p>
       `}
     </section>
 
     <section id="contacto">
       <h2>11. Información de Contacto</h2>
       <div class="contact-info">
+        ${step01?.hasDPO ? `
         <h3>Delegado de Protección de Datos</h3>
-        ${step11?.dpoName ? `<p><strong>Nombre:</strong> ${step11.dpoName}</p>` : ""}
-        ${step11?.dpoEmail ? `<p><strong>Email:</strong> ${step11.dpoEmail}</p>` : ""}
-        ${step11?.dpoPhone ? `<p><strong>Teléfono:</strong> ${step11.dpoPhone}</p>` : ""}
+        ${step01?.dpoName ? `<p><strong>Nombre:</strong> ${step01.dpoName}</p>` : ""}
+        ${step01?.dpoEmail ? `<p><strong>Email:</strong> ${step01.dpoEmail}</p>` : ""}
+        ${step01?.dpoPhone ? `<p><strong>Teléfono:</strong> ${step01.dpoPhone}</p>` : ""}
+        ` : `
+        <h3>Contacto</h3>
+        <p><strong>Email:</strong> ${step01?.email || "contacto@empresa.cl"}</p>
+        `}
       </div>
-      <p>Para consultas o solicitudes relacionadas con sus datos personales, puede contactarnos a través de los medios indicados anteriormente.</p>
+      ${step12?.contactChannel ? `<p><strong>Canal de Contacto:</strong> ${step12.contactChannel}</p>` : ""}
     </section>
 
     <section id="modificaciones">
       <h2>12. Modificaciones a esta Política</h2>
       <p>Nos reservamos el derecho de modificar esta política en cualquier momento. Los cambios serán publicados en esta misma página con la fecha de última actualización.</p>
-      ${step12?.notificationMethod ? `
-      <p><strong>Método de Notificación:</strong> ${step12.notificationMethod}</p>
+      ${step12?.reviewFrequency ? `
+      <p><strong>Frecuencia de Revisión:</strong> ${step12.reviewFrequency === 'annual' ? 'Anual' : step12.reviewFrequency === 'biannual' ? 'Semestral' : 'Según necesidad'}</p>
       ` : ""}
       <p><strong>Versión:</strong> ${policy.version}</p>
       <p><strong>Fecha de Vigencia:</strong> ${formatDate(policy.updatedAt)}</p>
