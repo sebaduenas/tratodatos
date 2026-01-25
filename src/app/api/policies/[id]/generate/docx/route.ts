@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { generateWordDocument } from "@/lib/document-generator/word-document";
 import type { Policy } from "@/types/policy";
 
-export async function POST(
+export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {

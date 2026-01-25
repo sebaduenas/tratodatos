@@ -6,7 +6,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { PolicyPDFDocument } from "@/lib/document-generator/pdf-document";
 import type { Policy } from "@/types/policy";
 
-export async function POST(
+export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {

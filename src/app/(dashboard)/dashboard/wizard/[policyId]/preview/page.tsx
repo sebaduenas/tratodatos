@@ -86,31 +86,53 @@ export default async function PreviewPage({ params }: PreviewPageProps) {
                 <CardTitle className="text-lg">Descargar Documento</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <form action={`/api/policies/${policyId}/generate/pdf`} method="POST">
-                  <Button
-                    type="submit"
-                    className="w-full gap-2 bg-gradient-to-r from-indigo-600 to-violet-600"
-                    disabled={!isComplete}
-                  >
-                    <Download className="w-4 h-4" />
-                    Descargar PDF
-                  </Button>
-                </form>
+                {isComplete ? (
+                  <>
+                    <a
+                      href={`/api/policies/${policyId}/generate/pdf`}
+                      download
+                      className="block"
+                    >
+                      <Button className="w-full gap-2 bg-gradient-to-r from-indigo-600 to-violet-600">
+                        <Download className="w-4 h-4" />
+                        Descargar PDF
+                      </Button>
+                    </a>
 
-                <Button variant="outline" className="w-full gap-2" disabled={!isComplete}>
-                  <FileText className="w-4 h-4" />
-                  Descargar Word
-                </Button>
+                    <a
+                      href={`/api/policies/${policyId}/generate/docx`}
+                      download
+                      className="block"
+                    >
+                      <Button variant="outline" className="w-full gap-2">
+                        <FileText className="w-4 h-4" />
+                        Descargar Word
+                      </Button>
+                    </a>
 
-                <Button variant="outline" className="w-full gap-2" disabled={!isComplete}>
-                  <FileText className="w-4 h-4" />
-                  Ver HTML
-                </Button>
-
-                {!isComplete && (
-                  <p className="text-xs text-amber-600 text-center">
-                    Completa todos los pasos para descargar
-                  </p>
+                    <Button variant="outline" className="w-full gap-2" disabled>
+                      <FileText className="w-4 h-4" />
+                      Ver HTML (próximamente)
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button className="w-full gap-2" disabled>
+                      <Download className="w-4 h-4" />
+                      Descargar PDF
+                    </Button>
+                    <Button variant="outline" className="w-full gap-2" disabled>
+                      <FileText className="w-4 h-4" />
+                      Descargar Word
+                    </Button>
+                    <Button variant="outline" className="w-full gap-2" disabled>
+                      <FileText className="w-4 h-4" />
+                      Ver HTML
+                    </Button>
+                    <p className="text-xs text-amber-600 text-center">
+                      Completa todos los pasos para descargar
+                    </p>
+                  </>
                 )}
               </CardContent>
             </Card>
