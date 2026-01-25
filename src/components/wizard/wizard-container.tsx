@@ -103,8 +103,8 @@ export function WizardContainer({
               </Link>
               <div className="h-6 w-px bg-slate-200" />
               <div>
-                <h1 className="font-semibold text-slate-900">{policy.name}</h1>
-                <p className="text-sm text-slate-500">
+                <h1 className="text-sm font-medium text-slate-900">{policy.name}</h1>
+                <p className="text-xs text-slate-500">
                   Paso {currentStep} de 12: {stepInfo.title}
                 </p>
               </div>
@@ -125,8 +125,8 @@ export function WizardContainer({
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-[280px_1fr] gap-8">
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid lg:grid-cols-[260px_1fr] gap-6">
           {/* Sidebar */}
           <WizardSidebar
             currentStep={currentStep}
@@ -137,11 +137,11 @@ export function WizardContainer({
           {/* Main Content */}
           <div className="space-y-6">
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 lg:p-8">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-900">
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-slate-900">
                   {stepInfo.title}
                 </h2>
-                <p className="text-slate-600 mt-1">{stepInfo.description}</p>
+                <p className="text-sm text-slate-600 mt-0.5">{stepInfo.description}</p>
               </div>
 
               <StepComponent policyId={policy.id} />
