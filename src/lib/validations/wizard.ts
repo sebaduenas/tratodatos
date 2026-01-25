@@ -43,7 +43,7 @@ export const step01Schema = z.object({
   region: z.string().min(1, 'Seleccione una región'),
   phone: z.string().regex(/^\+?56\s?\d{9}$/, 'Formato: +56 912345678'),
   email: z.string().email('Email inválido'),
-  website: z.string().default(''),
+  website: z.string(),
   hasDPO: z.boolean(),
   dpoName: z.string().optional().or(z.literal('')),
   dpoEmail: z.string().email('Email inválido').optional().or(z.literal('')),
