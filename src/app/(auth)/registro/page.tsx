@@ -84,21 +84,28 @@ export default function RegisterPage() {
         return;
       }
 
-      const signInResult = await signIn("credentials", {
-        email: data.email,
-        password: data.password,
-        redirect: false,
-      });
+      // Auto-login después del registro
+      try {
+        const signInResult = await signIn("credentials", {
+          email: data.email,
+          password: data.password,
+          redirect: false,
+        });
 
-      if (signInResult?.error) {
-        toast.error("Cuenta creada. Por favor inicia sesión.");
+        if (signInResult?.error) {
+          toast.success("¡Cuenta creada! Por favor inicia sesión.");
+          router.push("/login");
+          return;
+        }
+
+        toast.success("¡Cuenta creada exitosamente!");
+        router.push("/dashboard");
+        router.refresh();
+      } catch (signInError) {
+        // Si el auto-login falla, igual redirigimos al login
+        toast.success("¡Cuenta creada! Por favor inicia sesión.");
         router.push("/login");
-        return;
       }
-
-      toast.success("¡Cuenta creada exitosamente!");
-      router.push("/dashboard");
-      router.refresh();
     } catch (error) {
       toast.error("Error al crear la cuenta");
     } finally {
