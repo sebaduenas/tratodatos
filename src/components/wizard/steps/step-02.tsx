@@ -129,6 +129,7 @@ export function Step02Form({ policyId }: Step02FormProps) {
               >
                 <Checkbox
                   checked={categories[key as keyof typeof categories]}
+                  onClick={(e) => e.stopPropagation()}
                   onCheckedChange={() =>
                     toggleCategory(key as keyof typeof categories)
                   }
@@ -182,6 +183,7 @@ export function Step02Form({ policyId }: Step02FormProps) {
               >
                 <Checkbox
                   checked={categories[key as keyof typeof categories]}
+                  onClick={(e) => e.stopPropagation()}
                   onCheckedChange={() =>
                     toggleCategory(key as keyof typeof categories)
                   }
@@ -218,6 +220,7 @@ export function Step02Form({ policyId }: Step02FormProps) {
         >
           <Checkbox
             checked={categories.minors}
+            onClick={(e) => e.stopPropagation()}
             onCheckedChange={() => toggleCategory("minors")}
           />
           <div className="flex-1">
