@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { createVerificationToken } from "@/lib/tokens";
+import { sendEmail, getVerificationEmailTemplate, generateVerificationUrl } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
 
 const registerSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -14,6 +17,12 @@ const registerSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  // Rate limiting
+  const rateLimitResult = await rateLimit(request, "auth");
+  if (!rateLimitResult.success && rateLimitResult.response) {
+    return rateLimitResult.response;
+  }
+
   try {
     const body = await request.json();
     const data = registerSchema.parse(body);
@@ -62,10 +71,25 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Send verification email (non-blocking)
+    try {
+      const token = await createVerificationToken(user.email);
+      const verificationUrl = generateVerificationUrl(token);
+      
+      await sendEmail({
+        to: user.email,
+        subject: "Verifica tu email - TratoDatos",
+        html: getVerificationEmailTemplate(user.name || "Usuario", verificationUrl),
+      });
+    } catch (emailError) {
+      // Log error but don't fail registration
+      console.error("Error sending verification email:", emailError);
+    }
+
     return NextResponse.json(
       {
         success: true,
-        message: "Cuenta creada exitosamente",
+        message: "Cuenta creada exitosamente. Revisa tu email para verificar tu cuenta.",
         user: {
           id: user.id,
           email: user.email,

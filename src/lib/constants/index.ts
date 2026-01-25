@@ -111,6 +111,25 @@ Este documento NO constituye asesoría legal. Se recomienda que las organizacion
 } as const;
 
 // =====================================================
+// PERÍODOS DE RETENCIÓN
+// =====================================================
+
+export const RETENTION_PERIODS = {
+  "1y": { code: "1y", label: "1 año", days: 365 },
+  "2y": { code: "2y", label: "2 años", days: 730 },
+  "3y": { code: "3y", label: "3 años", days: 1095 },
+  "5y": { code: "5y", label: "5 años", days: 1825 },
+  "6y": { code: "6y", label: "6 años", days: 2190 },
+  "10y": { code: "10y", label: "10 años", days: 3650 },
+  "indefinite": { code: "indefinite", label: "mientras dure la relación contractual", days: -1 },
+} as const;
+
+// Helper function to get readable retention period
+export function getRetentionPeriodLabel(code: string): string {
+  return RETENTION_PERIODS[code as keyof typeof RETENTION_PERIODS]?.label || code;
+}
+
+// =====================================================
 // PLANES Y LÍMITES
 // =====================================================
 

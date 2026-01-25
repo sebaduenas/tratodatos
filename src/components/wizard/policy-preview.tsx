@@ -3,22 +3,11 @@
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import type { Policy } from "@/types/policy";
-import { DATA_CATEGORIES, LEGAL_BASES, PURPOSES, DATA_SUBJECTS, CHILEAN_REGIONS, LEGAL_TEXTS } from "@/lib/constants";
+import { DATA_CATEGORIES, LEGAL_BASES, PURPOSES, DATA_SUBJECTS, CHILEAN_REGIONS, LEGAL_TEXTS, getRetentionPeriodLabel } from "@/lib/constants";
 
 interface PolicyPreviewProps {
   policy: Policy;
 }
-
-// Mapeo de códigos de período a texto legible
-const RETENTION_PERIODS: Record<string, string> = {
-  "1y": "1 año",
-  "2y": "2 años",
-  "3y": "3 años",
-  "5y": "5 años",
-  "6y": "6 años",
-  "10y": "10 años",
-  "indefinite": "mientras dure la relación contractual",
-};
 
 export function PolicyPreview({ policy }: PolicyPreviewProps) {
   const step01 = policy.step01Data as any;
@@ -225,7 +214,7 @@ export function PolicyPreview({ policy }: PolicyPreviewProps) {
           <p>
             Los datos personales serán conservados durante el tiempo necesario para
             cumplir con las finalidades para las que fueron recopilados, con un período
-            general de <strong>{RETENTION_PERIODS[step08.defaultPeriod] || step08.defaultPeriod}</strong>.
+            general de <strong>{getRetentionPeriodLabel(step08.defaultPeriod)}</strong>.
           </p>
           <p className="mt-4">
             <strong>Proceso de eliminación:</strong> {step08.deletionProcess}

@@ -2,32 +2,25 @@
 // TratoDatos - Schemas de Validación Zod
 
 import { z } from 'zod';
+import { validateRut, formatRut, cleanRut } from '@/lib/rut';
 
 // =====================================================
-// VALIDADOR DE RUT CHILENO
+// VALIDADOR DE RUT CHILENO MEJORADO
 // =====================================================
 
-const rutRegex = /^\d{1,2}\.\d{3}\.\d{3}[-][0-9kK]{1}$/;
-
-function validateRut(rut: string): boolean {
-  const cleanRut = rut.replace(/\./g, '').replace(/-/g, '');
-  const body = cleanRut.slice(0, -1);
-  const dv = cleanRut.slice(-1).toUpperCase();
-  
-  let sum = 0;
-  let multiplier = 2;
-  
-  for (let i = body.length - 1; i >= 0; i--) {
-    sum += parseInt(body[i]) * multiplier;
-    multiplier = multiplier === 7 ? 2 : multiplier + 1;
-  }
-  
-  const expectedDv = 11 - (sum % 11);
-  const dvMap: { [key: number]: string } = { 11: '0', 10: 'K' };
-  const calculatedDv = dvMap[expectedDv] || expectedDv.toString();
-  
-  return dv === calculatedDv;
-}
+// Custom RUT schema with auto-formatting
+const rutSchema = z.string()
+  .min(8, 'El RUT debe tener al menos 8 caracteres')
+  .max(12, 'RUT demasiado largo')
+  .refine((value) => {
+    // Allow empty for optional fields
+    if (!value || value.trim() === '') return true;
+    return validateRut(value);
+  }, { message: 'RUT inválido. Verifica el dígito verificador.' })
+  .transform((value) => {
+    if (!value || value.trim() === '') return value;
+    return formatRut(value);
+  });
 
 // =====================================================
 // PASO 1: Identificación del Responsable
@@ -35,9 +28,9 @@ function validateRut(rut: string): boolean {
 
 export const step01Schema = z.object({
   companyName: z.string().min(2, 'Mínimo 2 caracteres').max(200),
-  rut: z.string().regex(rutRegex, 'Formato: 12.345.678-9').refine(validateRut, 'RUT inválido'),
+  rut: rutSchema,
   legalRepName: z.string().min(2, 'Mínimo 2 caracteres').max(200),
-  legalRepRut: z.string().regex(rutRegex, 'Formato: 12.345.678-9').refine(validateRut, 'RUT inválido'),
+  legalRepRut: rutSchema,
   address: z.string().min(5, 'Mínimo 5 caracteres').max(300),
   city: z.string().min(2, 'Seleccione una ciudad'),
   region: z.string().min(1, 'Seleccione una región'),

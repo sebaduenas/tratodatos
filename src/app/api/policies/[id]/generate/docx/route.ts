@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { renderToBuffer } from "@react-pdf/renderer";
-import { PolicyPDFDocument } from "@/lib/document-generator/pdf-document";
+import { generateWordDocument } from "@/lib/document-generator/word-document";
 import type { Policy } from "@/types/policy";
 
 export async function POST(
@@ -35,26 +34,33 @@ export async function POST(
 
     if (policy.completionPct < 100) {
       return NextResponse.json(
-        { error: "La política debe estar completa para generar el PDF" },
+        { error: "La política debe estar completa para generar el documento" },
         { status: 400 }
       );
     }
 
+    // Only Professional and Enterprise can download Word without watermark
     const includeWatermark = policy.user.subscriptionTier === "FREE";
 
-    // Generate PDF using react-pdf
-    const pdfBuffer = await renderToBuffer(
-      PolicyPDFDocument({
-        policy: policy as unknown as Policy,
-        includeWatermark,
-      })
-    );
+    // Check if user has access to Word export
+    if (policy.user.subscriptionTier === "FREE") {
+      return NextResponse.json(
+        { error: "La exportación a Word está disponible solo para planes Professional y Enterprise" },
+        { status: 403 }
+      );
+    }
+
+    // Generate Word document
+    const docxBuffer = await generateWordDocument({
+      policy: policy as unknown as Policy,
+      includeWatermark,
+    });
 
     // Record download
     await prisma.policyDownload.create({
       data: {
         policyId: id,
-        format: "pdf",
+        format: "docx",
         ipAddress: request.headers.get("x-forwarded-for") || "unknown",
         userAgent: request.headers.get("user-agent") || "unknown",
       },
@@ -67,30 +73,31 @@ export async function POST(
         action: "POLICY_DOWNLOADED",
         resource: "policy",
         resourceId: id,
-        details: { format: "pdf", includeWatermark },
+        details: { format: "docx", includeWatermark },
       },
     });
 
-    // Return PDF
+    // Return Word document
     const filename = `politica-datos-${policy.name
       .toLowerCase()
       .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9-]/g, "")}.pdf`;
+      .replace(/[^a-z0-9-]/g, "")}.docx`;
 
     // Convert Buffer to Uint8Array for NextResponse compatibility
-    const uint8Array = new Uint8Array(pdfBuffer);
+    const uint8Array = new Uint8Array(docxBuffer);
 
     return new NextResponse(uint8Array, {
       headers: {
-        "Content-Type": "application/pdf",
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": pdfBuffer.length.toString(),
+        "Content-Length": docxBuffer.length.toString(),
       },
     });
   } catch (error) {
-    console.error("Error generating PDF:", error);
+    console.error("Error generating Word document:", error);
     return NextResponse.json(
-      { error: "Error al generar el PDF" },
+      { error: "Error al generar el documento Word" },
       { status: 500 }
     );
   }

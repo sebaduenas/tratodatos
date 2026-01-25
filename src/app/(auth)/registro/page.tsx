@@ -83,9 +83,9 @@ export default function RegisterPage() {
         return;
       }
 
-      // Redirigir al login después del registro exitoso
-      toast.success("¡Cuenta creada! Por favor inicia sesión.");
-      router.push("/login");
+      // Redirigir a verificación de email después del registro exitoso
+      toast.success("¡Cuenta creada! Revisa tu email para verificar tu cuenta.");
+      router.push("/verify-email");
     } catch (error) {
       toast.error("Error al crear la cuenta");
     } finally {
