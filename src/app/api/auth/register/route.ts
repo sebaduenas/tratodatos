@@ -7,10 +7,10 @@ const registerSchema = z.object({
   email: z.string().email("Email inválido"),
   password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
   name: z.string().min(2, "El nombre debe tener al menos 2 caracteres"),
-  companyName: z.string().optional(),
-  utmSource: z.string().optional(),
-  utmMedium: z.string().optional(),
-  utmCampaign: z.string().optional(),
+  companyName: z.string().optional().nullable().transform(val => val || undefined),
+  utmSource: z.string().optional().nullable().transform(val => val || undefined),
+  utmMedium: z.string().optional().nullable().transform(val => val || undefined),
+  utmCampaign: z.string().optional().nullable().transform(val => val || undefined),
 });
 
 export async function POST(request: NextRequest) {
