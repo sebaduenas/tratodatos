@@ -14,8 +14,8 @@ import {
 
 const navItems = [
   { href: "#caracteristicas", label: "Características" },
-  { href: "#precios", label: "Precios" },
   { href: "#como-funciona", label: "Cómo funciona" },
+  { href: "#precios", label: "Precios" },
 ];
 
 export function LandingHeader() {
