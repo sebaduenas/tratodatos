@@ -21,6 +21,7 @@ interface OnboardingContextType {
   isOnboarding: boolean;
   currentStep: number;
   steps: OnboardingStep[];
+  isReady: boolean; // Added: indicates if storage check is complete
   startOnboarding: () => void;
   nextStep: () => void;
   prevStep: () => void;
@@ -144,17 +145,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const isDismissed = (tipId: string) => dismissedTips.includes(tipId);
 
-  // Don't render anything until we've checked storage
-  if (!hasCheckedStorage) {
-    return <>{children}</>;
-  }
-
+  // Always provide the context, even while checking storage
   return (
     <OnboardingContext.Provider
       value={{
         isOnboarding,
         currentStep,
         steps: ONBOARDING_STEPS,
+        isReady: hasCheckedStorage,
         startOnboarding,
         nextStep,
         prevStep,

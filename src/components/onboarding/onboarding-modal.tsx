@@ -29,12 +29,14 @@ export function OnboardingModal() {
     isOnboarding,
     currentStep,
     steps,
+    isReady,
     nextStep,
     prevStep,
     skipOnboarding,
   } = useOnboarding();
 
-  if (!isOnboarding) return null;
+  // Don't render until storage check is complete
+  if (!isReady || !isOnboarding) return null;
 
   const step = steps[currentStep];
   const progress = ((currentStep + 1) / steps.length) * 100;
