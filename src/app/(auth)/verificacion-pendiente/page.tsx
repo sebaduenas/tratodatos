@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { Shield, Mail, Loader2, CheckCircle, RefreshCw } from "lucide-react";
@@ -8,9 +8,15 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 export default function VerificacionPendientePage() {
-  const { data: session, update } = useSession();
+  const { data: session, status, update } = useSession();
   const [isResending, setIsResending] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7243/ingest/86ae441f-9c0d-49f6-8756-c50687c69b54',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'verificacion-pendiente/page.tsx:mount',message:'PAGE MOUNTED',data:{sessionStatus:status,hasSession:!!session,userEmail:session?.user?.email||'no-email',emailVerified:session?.user?.emailVerified||false},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H2'})}).catch(()=>{});
+  }, [session, status]);
+  // #endregion
 
   const handleResendEmail = async () => {
     setIsResending(true);

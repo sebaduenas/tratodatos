@@ -15,6 +15,9 @@ export default function Error({
   useEffect(() => {
     // Log error to an error reporting service
     console.error("Application error:", error);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/86ae441f-9c0d-49f6-8756-c50687c69b54',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'error.tsx:useEffect',message:'GLOBAL ERROR CAUGHT',data:{errorMessage:error.message,errorName:error.name,errorDigest:error.digest,errorStack:error.stack?.substring(0,500),pathname:typeof window!=='undefined'?window.location.pathname:'unknown'},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H1-H5'})}).catch(()=>{});
+    // #endregion
   }, [error]);
 
   return (
@@ -48,17 +51,17 @@ export default function Error({
           </Link>
         </div>
 
-        {process.env.NODE_ENV === "development" && error.message && (
-          <details className="mt-8 text-left">
-            <summary className="text-sm text-slate-500 cursor-pointer hover:text-slate-700">
-              Detalles técnicos (solo desarrollo)
-            </summary>
-            <pre className="mt-2 p-4 bg-slate-900 text-slate-100 rounded-lg text-xs overflow-auto">
-              {error.message}
-              {error.stack && `\n\n${error.stack}`}
-            </pre>
-          </details>
-        )}
+        {/* Always show error details for debugging */}
+        <details className="mt-8 text-left">
+          <summary className="text-sm text-slate-500 cursor-pointer hover:text-slate-700">
+            Detalles técnicos
+          </summary>
+          <pre className="mt-2 p-4 bg-slate-900 text-slate-100 rounded-lg text-xs overflow-auto max-h-64">
+            {error.message || "Sin mensaje de error"}
+            {error.digest && `\n\nDigest: ${error.digest}`}
+            {error.stack && `\n\n${error.stack}`}
+          </pre>
+        </details>
       </div>
     </div>
   );
