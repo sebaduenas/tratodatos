@@ -26,7 +26,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 interface DashboardNavProps {
   user: {
@@ -132,7 +131,6 @@ export function DashboardNav({ user }: DashboardNavProps) {
         </div>
 
         <div className="flex items-center gap-4" data-onboarding="user-menu">
-          <ThemeToggle />
           <NotificationBell />
           {getPlanBadge(user.subscriptionTier)}
 
