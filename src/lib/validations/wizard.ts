@@ -144,14 +144,14 @@ export const step05Schema = z.object({
     legitimateInterest: z.boolean(),
   }).refine((b) => Object.values(b).some(v => v), { message: 'Seleccione al menos una base legal' }),
   consentDetails: z.object({
-    mechanism: z.string(),
-    withdrawalProcess: z.string(),
-    recordKeeping: z.boolean(),
+    mechanism: z.string().optional(),
+    withdrawalProcess: z.string().optional(),
+    recordKeeping: z.boolean().optional(),
   }).optional(),
   legitimateInterestAssessment: z.object({
-    interest: z.string().min(10),
-    necessity: z.string().min(10),
-    balancingTest: z.string().min(10),
+    interest: z.string().optional(),
+    necessity: z.string().optional(),
+    balancingTest: z.string().optional(),
   }).optional(),
 });
 
