@@ -34,7 +34,8 @@ export async function GET(
     return NextResponse.json({ policy });
   } catch (error) {
     console.error("Error fetching policy:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Error desconocido";
+    return NextResponse.json({ error: `Error al obtener política: ${msg}` }, { status: 500 });
   }
 }
 
@@ -84,6 +85,7 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting policy:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Error desconocido";
+    return NextResponse.json({ error: `Error al eliminar política: ${msg}` }, { status: 500 });
   }
 }

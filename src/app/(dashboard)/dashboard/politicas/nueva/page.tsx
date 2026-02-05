@@ -69,14 +69,21 @@ export default function NewPolicyPage() {
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Error al crear política");
+        let errorMessage = "Error al crear política";
+        try {
+          const data = await response.json();
+          errorMessage = data.error || errorMessage;
+        } catch {
+          errorMessage = `Error del servidor (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       toast.success("Política creada correctamente");
       router.push(`/dashboard/wizard/${data.id}/1`);
     } catch (error) {
+      console.error("Error creating policy:", error);
       toast.error(
         error instanceof Error ? error.message : "Error al crear política"
       );

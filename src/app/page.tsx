@@ -15,14 +15,14 @@ import { LandingHeader } from "@/components/landing/header";
 export const metadata: Metadata = {
   title: "TratoDatos - Genera tu Política de Datos en Minutos | Ley 21.719 Chile",
   description:
-    "Crea tu política de tratamiento de datos personales conforme a la Ley 21.719 de Chile. Wizard guiado de 12 pasos, genera documentos PDF y Word profesionales en 30 minutos. Comienza gratis.",
+    "Crea tu política de tratamiento de datos personales conforme a la Ley 21.719 de Chile. Proceso guiado de 12 pasos, genera documentos PDF y Word profesionales en 30 minutos. Comienza gratis.",
   alternates: {
     canonical: "https://tratodatos.cl",
   },
   openGraph: {
     title: "TratoDatos - Genera tu Política de Datos en Minutos",
     description:
-      "Cumple con la Ley 21.719 de Chile. Wizard guiado de 12 pasos para crear tu política de datos personales. Sin abogados, sin complicaciones.",
+      "Cumple con la Ley 21.719 de Chile. Proceso guiado de 12 pasos para crear tu política de datos personales. Sin abogados, sin complicaciones.",
     url: "https://tratodatos.cl",
   },
 };
@@ -75,7 +75,7 @@ function MondrianIllustration() {
 const features = [
   {
     icon: Zap,
-    title: "Wizard guiado de 12 pasos",
+    title: "Proceso guiado de 12 pasos",
     description: "Proceso simple con preguntas claras. Sin jerga legal.",
   },
   {
@@ -240,7 +240,7 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-12 max-w-4xl mx-auto">
             {[
               { num: "1", title: "Crea tu cuenta", desc: "Registro gratuito en 30 segundos" },
-              { num: "2", title: "Completa el wizard", desc: "Responde preguntas simples sobre tu empresa" },
+              { num: "2", title: "Completa el proceso", desc: "Responde preguntas simples sobre tu empresa" },
               { num: "3", title: "Descarga tu política", desc: "Obtén tu documento en PDF listo para usar" },
             ].map((step) => (
               <div key={step.num} className="text-center">

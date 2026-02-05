@@ -72,6 +72,7 @@ export async function PATCH(
     });
   } catch (error) {
     console.error("Error saving step:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Error desconocido";
+    return NextResponse.json({ error: `Error al guardar paso: ${msg}` }, { status: 500 });
   }
 }

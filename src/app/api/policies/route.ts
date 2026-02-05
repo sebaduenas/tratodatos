@@ -8,7 +8,7 @@ import { Prisma } from "@prisma/client";
 
 const createPolicySchema = z.object({
   name: z.string().min(1, "El nombre es requerido").max(200),
-  templateId: z.string().optional(),
+  templateId: z.string().nullable().optional(),
   templateData: z
     .object({
       step01Data: z.record(z.string(), z.unknown()).optional(),
@@ -24,6 +24,7 @@ const createPolicySchema = z.object({
       step11Data: z.record(z.string(), z.unknown()).optional(),
       step12Data: z.record(z.string(), z.unknown()).optional(),
     })
+    .nullable()
     .optional(),
 });
 
@@ -54,7 +55,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ policies });
   } catch (error) {
     console.error("Error fetching policies:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Error desconocido";
+    return NextResponse.json({ error: `Error al listar políticas: ${msg}` }, { status: 500 });
   }
 }
 
@@ -68,10 +70,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Check plan limits
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: { _count: { select: { policies: true } } },
-    });
+    let user;
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        include: { _count: { select: { policies: true } } },
+      });
+    } catch (dbError) {
+      console.error("Error connecting to database:", dbError);
+      return NextResponse.json(
+        { error: "Error de conexión a la base de datos" },
+        { status: 500 }
+      );
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -81,7 +92,8 @@ export async function POST(request: NextRequest) {
     }
 
     const planLimit =
-      PLAN_LIMITS[user.subscriptionTier as keyof typeof PLAN_LIMITS];
+      PLAN_LIMITS[user.subscriptionTier as keyof typeof PLAN_LIMITS] ||
+      PLAN_LIMITS.FREE;
 
     if (user._count.policies >= planLimit.maxPolicies) {
       return NextResponse.json(
@@ -93,7 +105,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      return NextResponse.json(
+        { error: "Error al leer los datos de la solicitud" },
+        { status: 400 }
+      );
+    }
+
     const { name, templateId, templateData } = createPolicySchema.parse(body);
 
     // Prepare policy data with optional template
@@ -146,20 +167,35 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const policy = await prisma.policy.create({
-      data: policyData,
-    });
+    let policy;
+    try {
+      policy = await prisma.policy.create({
+        data: policyData,
+      });
+    } catch (createError) {
+      console.error("Error creating policy in database:", createError);
+      const msg = createError instanceof Error ? createError.message : "Error desconocido";
+      return NextResponse.json(
+        { error: `Error al guardar la política: ${msg}` },
+        { status: 500 }
+      );
+    }
 
-    // Audit log
-    await prisma.auditLog.create({
-      data: {
-        userId: session.user.id,
-        action: "POLICY_CREATED",
-        resource: "policy",
-        resourceId: policy.id,
-        details: { name, templateId: templateId || null },
-      },
-    });
+    // Audit log (non-blocking, don't fail if this fails)
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId: session.user.id,
+          action: "POLICY_CREATED",
+          resource: "policy",
+          resourceId: policy.id,
+          details: { name, templateId: templateId || null },
+        },
+      });
+    } catch (auditError) {
+      console.error("Error creating audit log:", auditError);
+      // Continue anyway, don't fail the policy creation
+    }
 
     return NextResponse.json(policy, { status: 201 });
   } catch (error) {
@@ -171,6 +207,10 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("Error creating policy:", error);
-    return NextResponse.json({ error: "Error interno" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+    return NextResponse.json(
+      { error: `Error al crear política: ${errorMessage}` },
+      { status: 500 }
+    );
   }
 }

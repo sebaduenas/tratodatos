@@ -10,10 +10,10 @@ TratoDatos es una plataforma chilena que ayuda a empresas a generar políticas d
 - El costo de asesoría legal tradicional supera los $500.000 CLP
 
 ## Solución
-TratoDatos ofrece un wizard guiado de 12 pasos que permite crear una política de datos en menos de 30 minutos, sin necesidad de conocimientos legales.
+TratoDatos ofrece un proceso guiado de 12 pasos que permite crear una política de datos en menos de 30 minutos, sin necesidad de conocimientos legales.
 
 ## Características principales
-1. Wizard guiado de 12 pasos con preguntas simples
+1. Proceso guiado de 12 pasos con preguntas simples
 2. Generación automática de documentos en PDF y Word
 3. 100% conforme a la Ley 21.719 chilena
 4. Proceso completable en 30 minutos

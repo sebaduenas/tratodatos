@@ -13,7 +13,7 @@ const inter = Inter({
 const siteConfig = {
   name: "TratoDatos",
   description:
-    "Genera tu política de tratamiento de datos personales conforme a la Ley 21.719 chilena en minutos. Wizard guiado de 12 pasos, documentos profesionales en PDF y Word. Sin abogados, sin complicaciones.",
+    "Genera tu política de tratamiento de datos personales conforme a la Ley 21.719 chilena en minutos. Proceso guiado de 12 pasos, documentos profesionales en PDF y Word. Sin abogados, sin complicaciones.",
   url: "https://tratodatos.cl",
   ogImage: "https://tratodatos.cl/og-image.png",
   keywords: [
@@ -218,7 +218,7 @@ const jsonLd = {
           name: "¿Cuánto tiempo toma crear una política de datos con TratoDatos?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Con nuestro wizard guiado de 12 pasos, puedes crear tu política de tratamiento de datos personales en aproximadamente 30 minutos, sin necesidad de conocimientos legales previos.",
+            text: "Con nuestro proceso guiado de 12 pasos, puedes crear tu política de tratamiento de datos personales en aproximadamente 30 minutos, sin necesidad de conocimientos legales previos.",
           },
         },
         {
@@ -268,7 +268,7 @@ export default function RootLayout({
         <meta name="ai-content-declaration" content="human-created" />
         <meta
           name="ai-summary"
-          content="TratoDatos es una plataforma chilena para generar políticas de tratamiento de datos personales conforme a la Ley 21.719. Ofrece un wizard de 12 pasos, generación de PDF y Word, con planes desde gratis hasta empresa."
+          content="TratoDatos es una plataforma chilena para generar políticas de tratamiento de datos personales conforme a la Ley 21.719. Ofrece un proceso de 12 pasos, generación de PDF y Word, con planes desde gratis hasta empresa."
         />
 
         {/* JSON-LD Structured Data */}
