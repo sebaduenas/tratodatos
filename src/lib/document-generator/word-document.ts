@@ -22,6 +22,7 @@ import {
   DATA_SUBJECTS,
   CHILEAN_REGIONS,
   LEGAL_TEXTS,
+  SECURITY_MEASURES,
   getRetentionPeriodLabel,
 } from "@/lib/constants";
 
@@ -46,12 +47,107 @@ export async function generateWordDocument({
   const step06 = policy.step06Data as any;
   const step07 = policy.step07Data as any;
   const step08 = policy.step08Data as any;
+  const step09 = policy.step09Data as any;
+  const step10 = policy.step10Data as any;
   const step11 = policy.step11Data as any;
   const step12 = policy.step12Data as any;
 
+  const companyName = step01?.companyName || "la Empresa";
+
+  // Helper functions
+  const getSelectedCategories = () => {
+    if (!step02?.categories) return [];
+    return Object.entries(step02.categories)
+      .filter(([_, selected]) => selected)
+      .map(([key]) => {
+        const cat = DATA_CATEGORIES[key as keyof typeof DATA_CATEGORIES];
+        return {
+          name: cat?.name || key,
+          description: cat?.description || "",
+          isSensitive: cat?.isSensitive || false,
+        };
+      });
+  };
+
+  const getSensitiveCategories = () => getSelectedCategories().filter(c => c.isSensitive);
+  const getNonSensitiveCategories = () => getSelectedCategories().filter(c => !c.isSensitive);
+
+  const getSelectedPurposes = () => {
+    if (!step04?.purposes) return [];
+    return Object.entries(step04.purposes)
+      .filter(([_, selected]) => selected)
+      .map(([key]) => {
+        const purpose = PURPOSES[key as keyof typeof PURPOSES];
+        return {
+          name: purpose?.name || key,
+        };
+      });
+  };
+
+  const getSelectedLegalBases = () => {
+    if (!step05?.bases) return [];
+    return Object.entries(step05.bases)
+      .filter(([_, selected]) => selected)
+      .map(([key]) => {
+        const base = LEGAL_BASES[key as keyof typeof LEGAL_BASES];
+        return {
+          key,
+          name: base?.name || key,
+          article: base?.article || "",
+          description: base?.description || "",
+        };
+      });
+  };
+
+  const getSelectedSubjects = () => {
+    if (!step03?.subjects) return [];
+    return Object.entries(step03.subjects)
+      .filter(([_, selected]) => selected)
+      .map(([key]) => DATA_SUBJECTS[key as keyof typeof DATA_SUBJECTS]?.name || key);
+  };
+
+  const getSources = () => {
+    if (!step09?.sources) return { direct: false, public: false, third: false, auto: false };
+    return {
+      direct: step09.sources.directFromSubject,
+      public: step09.sources.publicSources,
+      third: step09.sources.thirdParties,
+      auto: step09.sources.automaticCollection,
+    };
+  };
+
+  const getSecurityMeasures = () => {
+    if (!step11) return { organizational: [], technical: [], physical: [] };
+    const org = Object.entries(step11.organizational || {})
+      .filter(([_, v]) => v)
+      .map(([k]) => SECURITY_MEASURES.organizational[k as keyof typeof SECURITY_MEASURES.organizational] || k);
+    const tech = Object.entries(step11.technical || {})
+      .filter(([_, v]) => v)
+      .map(([k]) => SECURITY_MEASURES.technical[k as keyof typeof SECURITY_MEASURES.technical] || k);
+    const phys = Object.entries(step11.physical || {})
+      .filter(([_, v]) => v)
+      .map(([k]) => SECURITY_MEASURES.physical[k as keyof typeof SECURITY_MEASURES.physical] || k);
+    return { organizational: org, technical: tech, physical: phys };
+  };
+
+  const getLegalBaseDescription = (key: string): string => {
+    const descriptions: Record<string, string> = {
+      consent: LEGAL_TEXTS.baseConsentimiento,
+      contract: LEGAL_TEXTS.baseContrato,
+      legalObligation: LEGAL_TEXTS.baseObligacionLegal,
+      vitalInterest: LEGAL_TEXTS.baseInteresVital,
+      publicInterest: LEGAL_TEXTS.baseInteresPublico,
+      legitimateInterest: LEGAL_TEXTS.baseInteresLegitimo,
+    };
+    return descriptions[key] || "";
+  };
+
+  const sources = getSources();
+  const security = getSecurityMeasures();
+
   const children: (Paragraph | Table)[] = [];
 
-  // Title
+  // ============ HEADER ============
   children.push(
     new Paragraph({
       children: [
@@ -67,34 +163,27 @@ export async function generateWordDocument({
     })
   );
 
-  // Company name
-  if (step01?.companyName) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: step01.companyName,
-            size: 28,
-            color: "475569",
-          }),
-        ],
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 100 },
-      })
-    );
-  }
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: companyName,
+          size: 28,
+          color: "334155",
+          bold: true,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 100 },
+    })
+  );
 
-  // Effective date
   if (step12?.effectiveDate) {
     children.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: `Vigente desde: ${format(
-              new Date(step12.effectiveDate),
-              "d 'de' MMMM 'de' yyyy",
-              { locale: es }
-            )}`,
+            text: `Vigente desde: ${format(new Date(step12.effectiveDate), "d 'de' MMMM 'de' yyyy", { locale: es })} | Versión ${policy.version}`,
             size: 20,
             color: "64748b",
           }),
@@ -109,280 +198,348 @@ export async function generateWordDocument({
   children.push(
     new Paragraph({
       border: {
-        bottom: { style: BorderStyle.SINGLE, size: 6, color: "1e40af" },
+        bottom: { style: BorderStyle.SINGLE, size: 12, color: "1e3a5f" },
       },
       spacing: { after: 400 },
     })
   );
 
-  // 1. Identificación del Responsable
-  if (step01) {
-    children.push(createSectionTitle("1. IDENTIFICACIÓN DEL RESPONSABLE"));
-    children.push(
-      createParagraph(
-        LEGAL_TEXTS.policyIntro.replace("{companyName}", step01.companyName)
-      )
-    );
+  // ============ SECTION 1: PRESENTACIÓN ============
+  children.push(createSectionTitle("1. PRESENTACIÓN DE LA POLÍTICA DE PRIVACIDAD"));
+  children.push(createParagraph(LEGAL_TEXTS.presentacion.replace('{companyName}', companyName)));
 
-    // Info table
-    const infoRows = [
-      ["Razón Social:", step01.companyName],
-      ["RUT:", step01.rut],
-      [
-        "Dirección:",
-        `${step01.address}, ${step01.city}, ${getRegionName(step01.region)}`,
-      ],
-      ["Teléfono:", step01.phone],
-      ["Email:", step01.email],
-    ];
-    if (step01.website) {
-      infoRows.push(["Sitio Web:", step01.website]);
-    }
+  // ============ SECTION 2: INTRODUCCIÓN ============
+  children.push(createSectionTitle("2. INTRODUCCIÓN Y ÁMBITO DE APLICACIÓN"));
+  children.push(createParagraph(LEGAL_TEXTS.introduccion));
 
-    children.push(createInfoTable(infoRows));
+  // ============ SECTION 3: IDENTIFICACIÓN DEL RESPONSABLE ============
+  children.push(createSectionTitle("3. IDENTIFICACIÓN DEL RESPONSABLE"));
+  children.push(createParagraph(LEGAL_TEXTS.quienesSomos.replace('{companyName}', companyName)));
 
-    // DPO info
-    if (step01.hasDPO && step01.dpoName) {
-      children.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: "Delegado de Protección de Datos (DPO):",
-              bold: true,
-            }),
-          ],
-          spacing: { before: 200, after: 100 },
-        })
-      );
-      const dpoRows = [
-        ["Nombre:", step01.dpoName],
-        ["Email:", step01.dpoEmail],
-      ];
-      if (step01.dpoPhone) {
-        dpoRows.push(["Teléfono:", step01.dpoPhone]);
-      }
-      children.push(createInfoTable(dpoRows));
-    }
+  const infoRows: string[][] = [
+    ["Razón Social:", companyName],
+  ];
+  if (step01?.rut) infoRows.push(["RUT:", step01.rut]);
+  if (step01?.legalRepName) {
+    infoRows.push(["Representante Legal:", `${step01.legalRepName}${step01.legalRepRut ? ` (RUT: ${step01.legalRepRut})` : ""}`]);
+  }
+  if (step01?.address) {
+    infoRows.push(["Dirección:", `${step01.address}${step01.city ? `, ${step01.city}` : ""}${step01.region ? `, ${getRegionName(step01.region)}` : ""}`]);
+  }
+  if (step01?.phone) infoRows.push(["Teléfono:", step01.phone]);
+  if (step01?.email) infoRows.push(["Email:", step01.email]);
+  if (step01?.website) infoRows.push(["Sitio Web:", step01.website]);
+
+  children.push(createInfoTable(infoRows));
+
+  if (step01?.hasDPO && step01?.dpoName) {
+    children.push(createSubsectionTitle("Delegado de Protección de Datos (DPO)"));
+    const dpoRows: string[][] = [["Nombre:", step01.dpoName]];
+    if (step01.dpoEmail) dpoRows.push(["Email:", step01.dpoEmail]);
+    if (step01.dpoPhone) dpoRows.push(["Teléfono:", step01.dpoPhone]);
+    children.push(createInfoTable(dpoRows));
   }
 
-  // 2. Categorías de Datos
-  if (step02) {
-    children.push(createSectionTitle("2. CATEGORÍAS DE DATOS PERSONALES"));
-    children.push(
-      createParagraph("Tratamos las siguientes categorías de datos personales:")
-    );
+  // ============ SECTION 4: A QUIÉNES APLICA ============
+  children.push(createSectionTitle("4. A QUIÉNES APLICA ESTA POLÍTICA"));
+  children.push(createParagraph(LEGAL_TEXTS.aQuienesAplica.replace('{companyName}', companyName)));
 
-    Object.entries(step02.categories || {})
-      .filter(([_, value]) => value)
-      .forEach(([key]) => {
-        const category = DATA_CATEGORIES[key as keyof typeof DATA_CATEGORIES];
-        children.push(
-          createBulletPoint(
-            `${category?.name || key}${category?.isSensitive ? " (Dato Sensible)" : ""}`
-          )
-        );
-      });
+  getSelectedSubjects().forEach((subject) => {
+    children.push(createBulletPoint(subject));
+  });
+  step03?.customSubjects?.forEach((subject: string) => {
+    children.push(createBulletPoint(subject));
+  });
 
-    if (step02.hasSensitiveData) {
-      children.push(
-        createWarningBox(
-          "Nota: El tratamiento de datos sensibles se realiza con consentimiento explícito del titular o bajo las bases legales establecidas en el Artículo 16 ter de la Ley 21.719."
-        )
-      );
-    }
+  children.push(createParagraph(LEGAL_TEXTS.noAplica));
+
+  // ============ SECTION 5: QUÉ INFORMACIÓN TRATAMOS ============
+  children.push(createSectionTitle("5. QUÉ INFORMACIÓN TRATAMOS"));
+  children.push(createParagraph(LEGAL_TEXTS.categoriasDatosIntro));
+
+  if (getNonSensitiveCategories().length > 0) {
+    children.push(createSubsectionTitle("Categorías de Datos Personales"));
+    getNonSensitiveCategories().forEach((cat) => {
+      children.push(createBulletPointWithDescription(cat.name, cat.description));
+    });
   }
 
-  // 3. Titulares
-  if (step03) {
-    children.push(createSectionTitle("3. TITULARES DE LOS DATOS"));
-    children.push(
-      createParagraph(
-        "Tratamos datos personales de las siguientes categorías de personas:"
-      )
-    );
-
-    Object.entries(step03.subjects || {})
-      .filter(([_, value]) => value)
-      .forEach(([key]) => {
-        children.push(
-          createBulletPoint(
-            DATA_SUBJECTS[key as keyof typeof DATA_SUBJECTS]?.name || key
-          )
-        );
-      });
+  if (getSensitiveCategories().length > 0) {
+    children.push(createSubsectionTitle("Datos Sensibles"));
+    getSensitiveCategories().forEach((cat) => {
+      children.push(createBulletPointWithDescription(cat.name, cat.description));
+    });
+    children.push(createWarningBox(`Nota importante: ${LEGAL_TEXTS.notaDatosSensibles}`));
   }
 
-  // 4. Finalidades
-  if (step04) {
-    children.push(createSectionTitle("4. FINALIDADES DEL TRATAMIENTO"));
-    children.push(
-      createParagraph(
-        "Sus datos personales son tratados para las siguientes finalidades:"
-      )
-    );
-
-    Object.entries(step04.purposes || {})
-      .filter(([_, value]) => value)
-      .forEach(([key]) => {
-        children.push(
-          createBulletPoint(PURPOSES[key as keyof typeof PURPOSES]?.name || key)
-        );
-      });
+  // ============ SECTION 6: USO EN LÍNEA ============
+  children.push(createSectionTitle("6. CÓMO UTILIZAMOS LA INFORMACIÓN EN LÍNEA"));
+  children.push(createParagraph(LEGAL_TEXTS.usoEnLineaIntro));
+  children.push(createBulletPointWithDescription("Formularios de contacto", LEGAL_TEXTS.usoEnLineaFormularios));
+  children.push(createBulletPointWithDescription("Navegación del sitio", LEGAL_TEXTS.usoEnLineaCookies));
+  if (sources.auto) {
+    children.push(createBulletPointWithDescription("Análisis estadísticos", LEGAL_TEXTS.usoEnLineaAnalytics));
   }
 
-  // 5. Bases Legales
-  if (step05) {
-    children.push(createSectionTitle("5. BASES LEGALES DEL TRATAMIENTO"));
+  // ============ SECTION 7: FUENTES DE DATOS ============
+  children.push(createSectionTitle("7. DE DÓNDE OBTENEMOS LA INFORMACIÓN"));
+  children.push(createParagraph(LEGAL_TEXTS.fuentesDatosIntro));
+  if (sources.direct) children.push(createBulletPointWithDescription("Recopilación directa", LEGAL_TEXTS.fuenteDirecta));
+  if (sources.auto) children.push(createBulletPointWithDescription("Recopilación automática", LEGAL_TEXTS.fuenteAutomatica));
+  if (sources.third) children.push(createBulletPointWithDescription("Terceros", LEGAL_TEXTS.fuenteTerceros));
+  if (sources.public) children.push(createBulletPointWithDescription("Fuentes públicas", LEGAL_TEXTS.fuentePublica));
+
+  // ============ SECTION 8: FINALIDADES ============
+  children.push(createSectionTitle("8. FINALIDADES DEL TRATAMIENTO"));
+  children.push(createParagraph(LEGAL_TEXTS.finalidadesIntro));
+  getSelectedPurposes().forEach((purpose) => {
+    children.push(createBulletPoint(purpose.name));
+  });
+
+  // ============ SECTION 9: BASES LEGALES ============
+  children.push(createSectionTitle("9. BASES LEGALES DEL TRATAMIENTO"));
+  children.push(createParagraph(LEGAL_TEXTS.basesLegalesIntro));
+  getSelectedLegalBases().forEach((base) => {
     children.push(
-      createParagraph(
-        "El tratamiento de sus datos se fundamenta en las siguientes bases legales:"
-      )
+      new Paragraph({
+        children: [
+          new TextRun({ text: base.name, bold: true, size: 22, color: "1e3a5f" }),
+          new TextRun({ text: base.article ? ` (${base.article})` : "", size: 22 }),
+        ],
+        spacing: { before: 200, after: 50 },
+      })
     );
+    children.push(createParagraph(getLegalBaseDescription(base.key)));
+  });
 
-    Object.entries(step05.bases || {})
-      .filter(([_, value]) => value)
-      .forEach(([key]) => {
-        const base = LEGAL_BASES[key as keyof typeof LEGAL_BASES];
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({ text: "• ", size: 22 }),
-              new TextRun({ text: base?.name || key, bold: true, size: 22 }),
-              new TextRun({
-                text: base?.article ? ` (${base.article}): ` : ": ",
-                size: 22,
-              }),
-              new TextRun({ text: base?.description || "", size: 22 }),
-            ],
-            spacing: { before: 100, after: 100 },
-            indent: { left: 360 },
-          })
-        );
-      });
-  }
+  // ============ SECTION 10: COMPARTIR INFORMACIÓN ============
+  children.push(createSectionTitle("10. COMPARTIR INFORMACIÓN PERSONAL"));
+  children.push(createParagraph(LEGAL_TEXTS.compartirIntro));
 
-  // 6. Destinatarios
-  if (step06) {
-    children.push(createSectionTitle("6. DESTINATARIOS DE LOS DATOS"));
-    if (step06.sharesData && step06.recipients?.length > 0) {
-      children.push(
-        createParagraph(
-          "Sus datos pueden ser comunicados a los siguientes destinatarios:"
-        )
-      );
-      step06.recipients.forEach((r: any) => {
-        children.push(
-          new Paragraph({
-            children: [
-              new TextRun({ text: "• ", size: 22 }),
-              new TextRun({ text: r.name, bold: true, size: 22 }),
-              new TextRun({ text: ` (${r.country}): ${r.purpose}`, size: 22 }),
-            ],
-            spacing: { before: 100, after: 100 },
-            indent: { left: 360 },
-          })
-        );
-      });
-    } else {
-      children.push(
-        createParagraph("No comunicamos sus datos personales a terceros.")
-      );
-    }
-  }
-
-  // 7. Transferencias Internacionales
-  if (step07?.hasInternationalTransfers) {
-    children.push(createSectionTitle("7. TRANSFERENCIAS INTERNACIONALES"));
-    children.push(
-      createParagraph(
-        "Realizamos transferencias de datos personales a los siguientes países:"
-      )
-    );
-    step07.transfers?.forEach((t: any) => {
+  if (step06?.sharesData && step06?.recipients?.length > 0) {
+    children.push(createSubsectionTitle("Destinatarios de los Datos"));
+    step06.recipients.forEach((r: any) => {
       children.push(
         new Paragraph({
           children: [
             new TextRun({ text: "• ", size: 22 }),
-            new TextRun({ text: t.country, bold: true, size: 22 }),
-            new TextRun({ text: `: ${t.recipient} - ${t.purpose}`, size: 22 }),
+            new TextRun({ text: r.name, bold: true, size: 22 }),
+            new TextRun({ text: ` (${r.country}): ${r.purpose}${r.hasContract ? " - Con contrato" : ""}`, size: 22 }),
           ],
-          spacing: { before: 100, after: 100 },
+          spacing: { before: 50, after: 50 },
           indent: { left: 360 },
         })
       );
     });
+  } else {
+    children.push(createParagraph("No comunicamos sus datos personales a terceros, salvo cuando sea requerido por ley o con su consentimiento expreso."));
   }
 
-  // 8. Plazos de Conservación
-  if (step08) {
-    children.push(createSectionTitle("8. PLAZOS DE CONSERVACIÓN"));
+  if (step07?.hasInternationalTransfers && step07?.transfers?.length > 0) {
+    children.push(createSubsectionTitle("Transferencias Internacionales"));
+    children.push(createParagraph(LEGAL_TEXTS.transferenciasTexto));
+    step07.transfers.forEach((t: any) => {
+      children.push(createBulletPointWithDescription(t.country, `${t.recipient} - ${t.purpose}`));
+    });
+  }
+
+  // ============ SECTION 11: CONSERVACIÓN ============
+  children.push(createSectionTitle("11. CONSERVACIÓN DE INFORMACIÓN PERSONAL"));
+  children.push(createParagraph(LEGAL_TEXTS.conservacionIntro));
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({ text: "Período general de conservación: ", bold: true, size: 22 }),
+        new TextRun({ text: getRetentionPeriodLabel(step08?.defaultPeriod) || "el tiempo necesario para cumplir las finalidades", size: 22 }),
+      ],
+      spacing: { before: 100, after: 100 },
+    })
+  );
+  children.push(createParagraph(LEGAL_TEXTS.conservacionCriterios));
+
+  if (step08?.deletionProcess) {
+    children.push(createSubsectionTitle("Proceso de Eliminación"));
+    children.push(createParagraph(step08.deletionProcess));
+  }
+
+  children.push(createParagraph(LEGAL_TEXTS.conservacionExcepciones));
+
+  // ============ SECTION 12: DERECHOS DEL TITULAR ============
+  children.push(createSectionTitle("12. DERECHOS DEL TITULAR"));
+  children.push(createParagraph(LEGAL_TEXTS.derechosIntro));
+  children.push(createBulletPointWithDescription("Derecho de Acceso (Art. 10)", "Solicitar confirmación y acceder a sus datos personales."));
+  children.push(createBulletPointWithDescription("Derecho de Rectificación (Art. 11)", "Corregir datos inexactos o incompletos."));
+  children.push(createBulletPointWithDescription("Derecho de Supresión (Art. 12)", "Solicitar la eliminación de sus datos."));
+  children.push(createBulletPointWithDescription("Derecho de Oposición (Art. 13)", "Oponerse al tratamiento en ciertas circunstancias."));
+  children.push(createBulletPointWithDescription("Derecho a la Portabilidad (Art. 15)", "Recibir sus datos en formato estructurado."));
+  children.push(createBulletPointWithDescription("Decisiones Automatizadas (Art. 15 bis)", "No ser objeto de decisiones basadas únicamente en tratamiento automatizado."));
+
+  children.push(createSubsectionTitle("Cómo Ejercer sus Derechos"));
+  children.push(createParagraph(LEGAL_TEXTS.derechosEjercicio));
+
+  if (step12?.rightsExerciseProcess) {
     children.push(
       new Paragraph({
         children: [
-          new TextRun({
-            text: "Los datos personales serán conservados durante el tiempo necesario para cumplir con las finalidades para las que fueron recopilados, con un período general de ",
-            size: 22,
-          }),
-          new TextRun({
-            text:
-              getRetentionPeriodLabel(step08.defaultPeriod),
-            bold: true,
-            size: 22,
-          }),
-          new TextRun({ text: ".", size: 22 }),
+          new TextRun({ text: "Procedimiento: ", bold: true, size: 22 }),
+          new TextRun({ text: step12.rightsExerciseProcess, size: 22 }),
+        ],
+        spacing: { before: 100, after: 100 },
+        shading: { fill: "f8fafc" },
+      })
+    );
+  }
+
+  if (step12?.responseTime) {
+    children.push(
+      new Paragraph({
+        children: [
+          new TextRun({ text: "Plazo de respuesta: ", bold: true, size: 22 }),
+          new TextRun({ text: `${step12.responseTime} días hábiles`, size: 22 }),
         ],
         spacing: { before: 100, after: 100 },
       })
     );
-    if (step08.deletionProcess) {
+  }
+
+  children.push(createParagraph(LEGAL_TEXTS.derechosReclamo));
+
+  // ============ SECTION 13: PROTECCIÓN ============
+  children.push(createSectionTitle("13. PROTECCIÓN DE INFORMACIÓN PERSONAL"));
+  children.push(createParagraph(LEGAL_TEXTS.proteccionIntro));
+
+  if (security.technical.length > 0) {
+    children.push(createSubsectionTitle("Medidas Técnicas"));
+    security.technical.forEach((m) => children.push(createBulletPoint(m)));
+  }
+
+  if (security.organizational.length > 0) {
+    children.push(createSubsectionTitle("Medidas Organizativas"));
+    security.organizational.forEach((m) => children.push(createBulletPoint(m)));
+  }
+
+  if (security.physical.length > 0) {
+    children.push(createSubsectionTitle("Medidas Físicas"));
+    security.physical.forEach((m) => children.push(createBulletPoint(m)));
+  }
+
+  children.push(createParagraph(LEGAL_TEXTS.proteccionProveedores));
+
+  // ============ SECTION 14: DATOS DE MENORES ============
+  children.push(createSectionTitle("14. TRATAMIENTO DE DATOS DE MENORES"));
+  children.push(createParagraph(LEGAL_TEXTS.menoresIntro));
+
+  if (step02?.hasMinorData || step03?.processesMinorData) {
+    children.push(createParagraph(LEGAL_TEXTS.menoresPolitica));
+    children.push(createBulletPointWithDescription("Menores de 14 años", LEGAL_TEXTS.menoresMenos14));
+    children.push(createBulletPointWithDescription("Adolescentes 14-18 años", LEGAL_TEXTS.menores14a18));
+
+    if (step03?.minorDataDetails) {
+      const minorRows: string[][] = [];
+      if (step03.minorDataDetails.ageRange) minorRows.push(["Rango de edad:", step03.minorDataDetails.ageRange]);
+      if (step03.minorDataDetails.parentalConsentMechanism) minorRows.push(["Mecanismo de consentimiento:", step03.minorDataDetails.parentalConsentMechanism]);
+      if (minorRows.length > 0) children.push(createInfoTable(minorRows));
+    }
+  }
+
+  children.push(createParagraph(LEGAL_TEXTS.menoresPrincipios));
+
+  // ============ SECTION 15: DECISIONES AUTOMATIZADAS ============
+  children.push(createSectionTitle("15. DECISIONES AUTOMATIZADAS Y ELABORACIÓN DE PERFILES"));
+  children.push(createParagraph(LEGAL_TEXTS.automatizadasIntro));
+
+  if (step10?.hasAutomatedDecisions && step10?.decisions?.length > 0) {
+    children.push(createSubsectionTitle("Decisiones Automatizadas Implementadas"));
+    step10.decisions.forEach((d: any) => {
       children.push(
         new Paragraph({
           children: [
-            new TextRun({ text: "Proceso de eliminación: ", bold: true, size: 22 }),
-            new TextRun({ text: step08.deletionProcess, size: 22 }),
+            new TextRun({ text: "• ", size: 22 }),
+            new TextRun({ text: d.type, bold: true, size: 22 }),
+            new TextRun({ text: `: ${d.description}`, size: 22 }),
+          ],
+          spacing: { before: 100, after: 50 },
+          indent: { left: 360 },
+        })
+      );
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: "Lógica: ", bold: true, size: 20 }),
+            new TextRun({ text: d.logic, size: 20 }),
+            new TextRun({ text: " | Salvaguardas: ", bold: true, size: 20 }),
+            new TextRun({ text: d.safeguards, size: 20 }),
+          ],
+          spacing: { after: 100 },
+          indent: { left: 720 },
+        })
+      );
+    });
+    if (step10.humanReviewProcess) {
+      children.push(
+        new Paragraph({
+          children: [
+            new TextRun({ text: "Proceso de revisión humana: ", bold: true, size: 22 }),
+            new TextRun({ text: step10.humanReviewProcess, size: 22 }),
           ],
           spacing: { before: 100, after: 100 },
         })
       );
     }
+  } else {
+    children.push(createParagraph(LEGAL_TEXTS.automatizadasActual));
   }
 
-  // 9. Derechos del Titular
-  children.push(createSectionTitle("9. DERECHOS DEL TITULAR"));
-  children.push(createParagraph(LEGAL_TEXTS.rightsSection));
-
-  if (step12) {
-    children.push(
-      new Paragraph({
-        children: [
-          new TextRun({
-            text: "Para ejercer sus derechos, contacte a:",
-            bold: true,
-          }),
-        ],
-        spacing: { before: 200, after: 100 },
-      })
-    );
-    children.push(
-      createInfoTable([
-        ["Canal:", step12.contactChannel],
-        ["Responsable:", step12.responsiblePerson],
-        ["Plazo de respuesta:", `${step12.responseTime} días hábiles`],
-      ])
-    );
+  if (step10?.profiling?.exists) {
+    children.push(createSubsectionTitle("Elaboración de Perfiles"));
+    const profilingRows: string[][] = [];
+    if (step10.profiling.purpose) profilingRows.push(["Propósito:", step10.profiling.purpose]);
+    if (step10.profiling.logic) profilingRows.push(["Lógica:", step10.profiling.logic]);
+    if (step10.profiling.consequences) profilingRows.push(["Consecuencias:", step10.profiling.consequences]);
+    if (profilingRows.length > 0) children.push(createInfoTable(profilingRows));
   }
 
-  // 10. Seguridad
-  if (step11) {
-    children.push(createSectionTitle("10. MEDIDAS DE SEGURIDAD"));
-    children.push(
-      createParagraph(
-        "Implementamos medidas técnicas, organizativas y físicas apropiadas para proteger sus datos personales contra acceso no autorizado, pérdida o alteración."
-      )
-    );
+  children.push(createParagraph(LEGAL_TEXTS.automatizadasDerechos));
+
+  // ============ SECTION 16: CAMBIOS ============
+  children.push(createSectionTitle("16. CAMBIOS A ESTA POLÍTICA"));
+  children.push(createParagraph(LEGAL_TEXTS.cambiosIntro));
+  children.push(createParagraph(LEGAL_TEXTS.cambiosNotificacion));
+
+  const versionRows: string[][] = [
+    ["Versión actual:", String(policy.version)],
+    ["Última actualización:", format(new Date(policy.updatedAt), "d 'de' MMMM 'de' yyyy", { locale: es })],
+  ];
+  if (step12?.reviewFrequency) {
+    const freq = step12.reviewFrequency === 'annual' ? 'Anual' : step12.reviewFrequency === 'biannual' ? 'Semestral' : 'Según necesidad';
+    versionRows.push(["Frecuencia de revisión:", freq]);
+  }
+  if (step12?.responsiblePerson) versionRows.push(["Responsable:", step12.responsiblePerson]);
+  children.push(createInfoTable(versionRows));
+
+  // ============ SECTION 17: CONTACTO ============
+  children.push(createSectionTitle("17. CONTACTO"));
+  children.push(createParagraph(LEGAL_TEXTS.contactoIntro));
+
+  children.push(createSubsectionTitle("Responsable del Tratamiento"));
+  const contactRows: string[][] = [["Razón Social:", companyName]];
+  if (step01?.address) {
+    contactRows.push(["Dirección:", `${step01.address}${step01.city ? `, ${step01.city}` : ""}${step01.region ? `, ${getRegionName(step01.region)}` : ""}`]);
+  }
+  if (step01?.email) contactRows.push(["Email:", step01.email]);
+  if (step01?.phone) contactRows.push(["Teléfono:", step01.phone]);
+  if (step12?.contactChannel) contactRows.push(["Canal para derechos:", step12.contactChannel]);
+  children.push(createInfoTable(contactRows));
+
+  if (step01?.hasDPO && step01?.dpoName) {
+    children.push(createSubsectionTitle("Delegado de Protección de Datos"));
+    const dpoContactRows: string[][] = [["Nombre:", step01.dpoName]];
+    if (step01.dpoEmail) dpoContactRows.push(["Email:", step01.dpoEmail]);
+    if (step01.dpoPhone) dpoContactRows.push(["Teléfono:", step01.dpoPhone]);
+    children.push(createInfoTable(dpoContactRows));
   }
 
-  // Disclaimer
+  // ============ FOOTER / DISCLAIMER ============
   children.push(
     new Paragraph({
       border: {
@@ -423,11 +580,7 @@ export async function generateWordDocument({
     new Paragraph({
       children: [
         new TextRun({
-          text: `Última actualización: ${format(
-            new Date(policy.updatedAt),
-            "d 'de' MMMM 'de' yyyy",
-            { locale: es }
-          )}`,
+          text: "Documento generado conforme a la Ley N° 19.628, modificada por la Ley N° 21.719",
           size: 18,
           color: "94a3b8",
         }),
@@ -442,7 +595,7 @@ export async function generateWordDocument({
       new Paragraph({
         children: [
           new TextRun({
-            text: "Documento generado con el plan gratuito de TratoDatos",
+            text: "Documento generado con el plan gratuito de TratoDatos.cl",
             size: 18,
             italics: true,
             color: "94a3b8",
@@ -465,7 +618,8 @@ export async function generateWordDocument({
   return await Packer.toBuffer(doc);
 }
 
-// Helper functions
+// ============ HELPER FUNCTIONS ============
+
 function createSectionTitle(text: string): Paragraph {
   return new Paragraph({
     children: [
@@ -481,6 +635,20 @@ function createSectionTitle(text: string): Paragraph {
     border: {
       bottom: { style: BorderStyle.SINGLE, size: 6, color: "e2e8f0" },
     },
+  });
+}
+
+function createSubsectionTitle(text: string): Paragraph {
+  return new Paragraph({
+    children: [
+      new TextRun({
+        text,
+        bold: true,
+        size: 22,
+        color: "334155",
+      }),
+    ],
+    spacing: { before: 200, after: 100 },
   });
 }
 
@@ -502,6 +670,18 @@ function createBulletPoint(text: string): Paragraph {
   });
 }
 
+function createBulletPointWithDescription(title: string, description: string): Paragraph {
+  return new Paragraph({
+    children: [
+      new TextRun({ text: "• ", size: 22 }),
+      new TextRun({ text: title, bold: true, size: 22 }),
+      new TextRun({ text: `: ${description}`, size: 22 }),
+    ],
+    spacing: { before: 50, after: 50 },
+    indent: { left: 360 },
+  });
+}
+
 function createInfoTable(rows: string[][]): Table {
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
@@ -515,7 +695,7 @@ function createInfoTable(rows: string[][]): Table {
                   children: [new TextRun({ text: label, bold: true, size: 22 })],
                 }),
               ],
-              width: { size: 25, type: WidthType.PERCENTAGE },
+              width: { size: 30, type: WidthType.PERCENTAGE },
               borders: {
                 top: { style: BorderStyle.NONE },
                 bottom: { style: BorderStyle.NONE },
@@ -529,7 +709,7 @@ function createInfoTable(rows: string[][]): Table {
                   children: [new TextRun({ text: value, size: 22 })],
                 }),
               ],
-              width: { size: 75, type: WidthType.PERCENTAGE },
+              width: { size: 70, type: WidthType.PERCENTAGE },
               borders: {
                 top: { style: BorderStyle.NONE },
                 bottom: { style: BorderStyle.NONE },
@@ -547,7 +727,7 @@ function createWarningBox(text: string): Paragraph {
   return new Paragraph({
     children: [
       new TextRun({
-        text: "⚠️ " + text,
+        text,
         size: 20,
         color: "92400e",
       }),
