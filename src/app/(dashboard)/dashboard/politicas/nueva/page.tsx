@@ -80,7 +80,6 @@ export default function NewPolicyPage() {
       }
 
       const data = await response.json();
-      toast.success("Política creada correctamente");
       router.push(`/dashboard/wizard/${data.id}/1`);
     } catch (error) {
       console.error("Error creating policy:", error);
