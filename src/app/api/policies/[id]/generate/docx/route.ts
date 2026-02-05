@@ -42,14 +42,6 @@ export async function GET(
     // Only Professional and Enterprise can download Word without watermark
     const includeWatermark = policy.user.subscriptionTier === "FREE";
 
-    // Check if user has access to Word export
-    if (policy.user.subscriptionTier === "FREE") {
-      return NextResponse.json(
-        { error: "La exportación a Word está disponible solo para planes Professional y Enterprise" },
-        { status: 403 }
-      );
-    }
-
     // Generate Word document
     const docxBuffer = await generateWordDocument({
       policy: policy as unknown as Policy,
