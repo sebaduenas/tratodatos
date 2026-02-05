@@ -109,14 +109,14 @@ export interface Step05Data {
     legitimateInterest: boolean;
   };
   consentDetails?: {
-    mechanism: string;
-    withdrawalProcess: string;
-    recordKeeping: boolean;
+    mechanism?: string;
+    withdrawalProcess?: string;
+    recordKeeping?: boolean;
   };
   legitimateInterestAssessment?: {
-    interest: string;
-    necessity: string;
-    balancingTest: string;
+    interest?: string;
+    necessity?: string;
+    balancingTest?: string;
   };
   sensitiveDataBasis?: {
     explicitConsent: boolean;
